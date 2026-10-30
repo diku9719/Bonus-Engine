@@ -1,0 +1,11 @@
+# Studio exports and engine output contain contractor activity and draft payouts: keep them out of git
+data/
+out/
+*.csv.bak
+query-results-*.csv
+# but keep the reference tables
+!enki_status_map.csv
+!enki_flow_transitions.csv
+# generated site data (payouts) and local Vercel link
+site/data/
+site/.vercel/
