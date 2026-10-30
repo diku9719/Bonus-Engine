@@ -12,7 +12,7 @@ Computes the weekly Project Enki 2 (WS) bonus table and lead alerts from Studio'
 | `bonus_config.json` | The week's rules: window, gates, tiers, amounts, stage sets, rule switches. Edit this when a new bonus structure is posted. |
 | `bonus_engine.py` | Reads the export + map + config; writes bonus tables and alert lists to `out/`. |
 | `build_site.py` | Turns `out/` + the export into `site/data/*.json` for the lead site. |
-| `site/` | The lead site: `index.html` (Bonuses, Pipeline, Ownership, Alerts) and `middleware.js` (login prompt). |
+| `site/` | The lead site: `index.html` (Bonuses, Pipeline, Ownership, Alerts). |
 
 ## Weekly run
 
@@ -25,27 +25,19 @@ Computes the weekly Project Enki 2 (WS) bonus table and lead alerts from Studio'
 
 ## Lead site on Vercel
 
-The site's data holds draft payouts, so it is never committed (`site/data/` is git-ignored) and is deployed from your machine with the Vercel CLI. `middleware.js` asks for a username and password on every request; set them as `DASH_USER` and `DASH_PASSWORD` in the Vercel project. With either unset, nobody gets in.
-
-First time:
-
-```
-npm i -g vercel
-vercel login
-cd metrics/site
-vercel link            # create a new project, e.g. enki-metrics
-vercel env add DASH_USER production
-vercel env add DASH_PASSWORD production
-```
+The site's data holds draft payouts, so it is never committed (`site/data/` is git-ignored). The Vercel CLI also skips git-ignored files, so deploy from a folder outside the repo that `build_site.py` assembles. The site currently has **no login**: anyone with the URL can see the draft payouts, so share the link only with leads.
 
 Every refresh (after the weekly run above):
 
 ```
-python build_site.py path/to/export.csv
-cd site && vercel deploy --prod
+python build_site.py path/to/export.csv --deploy-dir ~/enki-site
+cd ~/enki-site
+vercel deploy --prod
 ```
 
-Open the URL in a private window: the browser must ask for a login before showing anything.
+First time only, inside `~/enki-site` before deploying: `vercel link` (pick the existing project, e.g. enki-metrics).
+
+Open the URL in a private window: it should show the tables.
 
 ## Defaults the engine applies where the rules are silent
 

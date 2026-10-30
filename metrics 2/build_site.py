@@ -1,9 +1,17 @@
 """Turn the engine's output + the Studio ledger export into the JSON files the lead site reads.
 
-usage: python build_site.py <ledger export .csv>
-Run bonus_engine.py on the same export first. Writes site/data/*.json (git-ignored: it holds payouts)."""
-import json, os, sys
+usage: python build_site.py <ledger export .csv> [--deploy-dir DIR]
+Run bonus_engine.py on the same export first. Writes site/data/*.json (git-ignored: it holds payouts).
+With --deploy-dir, also assembles a ready-to-deploy copy of the site (page + data) in DIR,
+outside the git repo, so the Vercel CLI cannot skip the git-ignored data files."""
+import json, os, shutil, sys
 import pandas as pd
+
+args = sys.argv[1:]
+DEPLOY = None
+if "--deploy-dir" in args:
+    i = args.index("--deploy-dir"); DEPLOY = os.path.abspath(os.path.expanduser(args[i + 1])); del args[i:i + 2]
+sys.argv = [sys.argv[0]] + args
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.environ.get("BONUS_OUT", os.path.join(HERE, "out"))
@@ -57,3 +65,12 @@ dump(L[["task_id","task_name","seq","status","entered_at","exited_at","owner_s",
 json.dump({"week": CFG["week_label"], "data_through": str(pd.to_datetime(L.entered_at, utc=True, format="ISO8601").max())[:16] + " UTC"},
           open(os.path.join(DATA, "meta.json"), "w"))
 print("site data written to", DATA)
+if DEPLOY:
+    os.makedirs(os.path.join(DEPLOY, "data"), exist_ok=True)
+    shutil.copy2(os.path.join(HERE, "site", "index.html"), os.path.join(DEPLOY, "index.html"))
+    stale = os.path.join(DEPLOY, "middleware.js")
+    if os.path.exists(stale): os.remove(stale)   # login guard removed for now
+    for f in os.listdir(DATA):
+        shutil.copy2(os.path.join(DATA, f), os.path.join(DEPLOY, "data", f))
+    print(f"deploy folder ready: {DEPLOY} ({len(os.listdir(os.path.join(DEPLOY, 'data')))} data files)")
+    print(f"next: cd \"{DEPLOY}\" && vercel deploy --prod")
