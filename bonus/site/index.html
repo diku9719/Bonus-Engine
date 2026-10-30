@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Enki Bonus & Pipeline</title>
+<style>
+  /* Layout: header + tabs, one column of cards; tables scroll inside their card. */
+  :root {
+    --bg: #f6f7f5; --panel: #ffffff; --fg: #1d2420; --muted: #5f6b64; --line: #dde3df;
+    --accent: #2f6f5e; --accent-soft: #e2efe9; --bar: #c5d0ca;
+    --ok: #2e7d4f; --warn: #a56a00; --bad: #b3362b;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #121614; --panel: #1a201d; --fg: #e6ebe8; --muted: #9aa6a0; --line: #2c3531;
+      --accent: #6cc0a5; --accent-soft: #1f342d; --bar: #3a4641; --ok: #6cc98f; --warn: #e0a53c; --bad: #ef7a6e; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--sans); }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-left)) 48px max(16px, env(safe-area-inset-right)); display: flex; flex-direction: column; gap: 20px; }
+  h1 { margin: 0; font-size: 1.6rem; font-weight: 650; letter-spacing: -0.01em; }
+  .sub { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+  .sub b { color: var(--fg); font-variant-numeric: tabular-nums; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); }
+  .tabs button { font: inherit; background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; color: var(--muted); cursor: pointer; }
+  .tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+  .tabs button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  section { display: flex; flex-direction: column; gap: 16px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+  .tile, .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+  .tile h3 { margin: 0; font-size: .8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .big { display: block; font-size: 1.8rem; font-weight: 650; font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .tile p { margin: 2px 0 0; font-size: .85rem; color: var(--muted); }
+  .card h2 { margin: 0; font-size: 1.05rem; font-weight: 600; }
+  .note { margin: 4px 0 12px; font-size: .85rem; color: var(--muted); max-width: 85ch; }
+  .scroll { overflow: auto; max-height: 30rem; }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+  th { position: sticky; top: 0; background: var(--panel); text-align: left; font-weight: 600; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .n { text-align: right; }
+  .who { font-family: var(--mono); font-size: .8rem; white-space: nowrap; }
+  .pill { display: inline-block; padding: 0 6px; border-radius: 6px; font-size: .78rem; border: 1px solid currentColor; white-space: nowrap; }
+  .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+  .paid { font-weight: 650; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .controls label { font-size: .85rem; color: var(--muted); }
+  select { font: inherit; max-width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--fg); }
+  .bars { display: grid; grid-template-columns: minmax(0, max-content) 1fr; gap: 6px 12px; align-items: center; font-size: .85rem; }
+  .bars .lbl { text-align: right; }
+  .bars .trk { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .bars .bar { height: 14px; border-radius: 3px; background: var(--bar); flex: none; }
+  .bars .bar.top { background: var(--accent); }
+  .bars .val { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .tl { display: grid; grid-template-columns: minmax(0, max-content) 1fr; gap: 4px 12px; align-items: center; font-size: .82rem; margin-bottom: 12px; }
+  .tl .lane { position: relative; height: 14px; background: var(--accent-soft); border-radius: 3px; }
+  .tl .seg { position: absolute; top: 0; height: 14px; border-radius: 3px; min-width: 3px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .8rem; color: var(--muted); margin-bottom: 8px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+  .err { color: var(--bad); }
+  @media (max-width: 520px) { .bars, .tl { grid-template-columns: 1fr; } .bars .lbl { text-align: left; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Enki bonus &amp; pipeline</h1>
+    <p class="sub" id="summary">Loading…</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button role="tab" data-tab="bonuses" aria-selected="true">Bonuses</button>
+    <button role="tab" data-tab="pipeline" aria-selected="false">Pipeline</button>
+    <button role="tab" data-tab="ownership" aria-selected="false">Ownership</button>
+    <button role="tab" data-tab="alerts" aria-selected="false">Alerts</button>
+  </nav>
+
+  <section id="v-bonuses">
+    <div class="tiles">
+      <div class="tile"><h3>Writers</h3><span class="big" id="t-writers">—</span><p id="t-writers-n"></p></div>
+      <div class="tile"><h3>Superwriters</h3><span class="big" id="t-super">—</span><p id="t-super-n"></p></div>
+      <div class="tile"><h3>Reviewers</h3><span class="big" id="t-rev">—</span><p id="t-rev-n"></p></div>
+    </div>
+    <div class="card">
+      <h2>Writers</h2>
+      <p class="note">One-shot $150 (passed review with no Needs Edits), +$150 per streak pair, two-shot $100, throughput 2 → $200 or 3 → $350 (highest tier only). AHT gate (under 22 h) not applied yet.</p>
+      <div class="scroll"><table><thead><tr><th>Writer</th><th class="n">Passed</th><th class="n">One-shots</th><th class="n">Streaks</th><th class="n">Two-shots</th><th class="n">Throughput</th><th class="n">Total</th></tr></thead><tbody id="b-writers"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h2>Superwriters</h2>
+      <p class="note">One-shot $200, +$150 per streak pair, throughput 2 / 4 / 6 submitted to audit → $200 / $500 / $800. Pays only if the 14-day audit defect rate is under 20%; AHT gate (under 16 h) not applied yet.</p>
+      <div class="scroll"><table><thead><tr><th>Superwriter</th><th class="n">Submitted</th><th class="n">Delivered</th><th class="n">One-shots</th><th class="n">Defect (14 d)</th><th>Gate</th><th class="n">Total</th></tr></thead><tbody id="b-super"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h2>Reviewers</h2>
+      <p class="note">Gate: 2+ reviewed tasks sent to audit this week and all-time defect rate 30% or less. Touches 6 / 9 / 12 → $100 / $200 / $300; defect 15% or less → $50, 10% or less → $100.</p>
+      <div class="scroll"><table><thead><tr><th>Reviewer</th><th class="n">Touches</th><th class="n">Sent to audit</th><th class="n">Defect (all-time)</th><th>Gate</th><th class="n">Total</th></tr></thead><tbody id="b-rev"></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="v-pipeline" hidden>
+    <div class="card">
+      <h2>Unfinished tasks by stage</h2>
+      <p class="note">Tasks sitting in each stage now, with the median days they have been there. The largest pile is highlighted.</p>
+      <div class="bars" id="pipe"></div>
+    </div>
+  </section>
+
+  <section id="v-ownership" hidden>
+    <div class="card">
+      <h2>Who held a task, and for how long</h2>
+      <p class="note">Every status change from Studio's history. Colour is the owner at that step; grey steps are pools with no owner.</p>
+      <div class="controls"><label for="task">Task</label><select id="task"></select></div>
+      <div class="legend" id="legend"></div>
+      <div class="tl" id="timeline"></div>
+      <div class="scroll"><table><thead><tr><th>#</th><th>Status</th><th>Entered (UTC)</th><th>Moved by</th><th>Owner</th><th class="n">Hours</th></tr></thead><tbody id="b-ledger"></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="v-alerts" hidden>
+    <div class="tiles" id="alert-tiles"></div>
+    <div class="card">
+      <h2>Alert list</h2>
+      <div class="controls"><label for="kind">Show</label><select id="kind"><option value="">All alerts</option></select></div>
+      <div class="scroll"><table><thead><tr><th>Alert</th><th>Task</th><th>Person</th><th>Detail</th></tr></thead><tbody id="b-alerts"></tbody></table></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  const usd = (v) => '$' + Number(v || 0).toLocaleString('en-US');
+  const pct = (v) => (v == null ? '—' : Math.round(v * 100) + '%');
+  const num = (v) => (v == null ? '—' : Number(v).toLocaleString('en-US'));
+  const td = (text, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = text; return c; };
+  const pill = (text, tone) => { const c = document.createElement('td'); const s = document.createElement('span'); s.className = 'pill ' + tone; s.textContent = text; c.append(s); return c; };
+  const load = async (n) => { const r = await fetch(`data/${n}.json`, { cache: 'no-store' }); if (!r.ok) throw new Error(`${n}.json: ${r.status}`); return r.json(); };
+
+  let D;
+  try {
+    const names = ['meta', 'writers', 'reviewers', 'superwriters', 'pipeline', 'alerts', 'ledger'];
+    D = Object.fromEntries(await Promise.all(names.map(async (n) => [n, await load(n)])));
+  } catch (e) {
+    $('summary').innerHTML = ''; const s = document.createElement('span'); s.className = 'err';
+    s.textContent = 'Could not load the data files. Run build_site.py before deploying. (' + e.message + ')'; $('summary').append(s); return;
+  }
+
+  // tabs
+  const tabs = document.querySelectorAll('[data-tab]');
+  const show = (t) => { tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t))); ['bonuses', 'pipeline', 'ownership', 'alerts'].forEach((s) => { $('v-' + s).hidden = s !== t; }); window.scrollTo(0, 0); };
+  tabs.forEach((b) => b.addEventListener('click', () => { show(b.dataset.tab); history.replaceState(null, '', '#' + b.dataset.tab); }));
+  if (location.hash) show(location.hash.slice(1));
+
+  // summary
+  const sum = (rows) => rows.reduce((s, r) => s + Number(r.total_usd || 0), 0);
+  const earning = (rows) => rows.filter((r) => Number(r.total_usd) > 0).length;
+  const total = sum(D.writers) + sum(D.superwriters) + sum(D.reviewers);
+  const open = D.pipeline.reduce((s, r) => s + r.open_tasks, 0);
+  $('summary').innerHTML = '';
+  $('summary').append(`Week of ${D.meta.week}, data through ${D.meta.data_through}: `, Object.assign(document.createElement('b'), { textContent: usd(total) }),
+    ' in draft bonuses before the AHT gate and roster check; ', Object.assign(document.createElement('b'), { textContent: num(open) }),
+    ' tasks unfinished; ', Object.assign(document.createElement('b'), { textContent: num(D.alerts.length) }), ' alerts.');
+  [['writers', 't-writers'], ['superwriters', 't-super'], ['reviewers', 't-rev']].forEach(([k, id]) => { $(id).textContent = usd(sum(D[k])); $(id + '-n').textContent = `${earning(D[k])} of ${D[k].length} earning`; });
+
+  // bonus tables
+  D.writers.forEach((r) => { const tr = document.createElement('tr'); tr.append(td(r.person, 'who'), td(num(r.passed), 'n'), td(num(r.one_shots), 'n'), td(num(r.streaks), 'n'), td(num(r.two_shots), 'n'), td(num(r.throughput_tasks), 'n'), td(usd(r.total_usd), 'n' + (r.total_usd > 0 ? ' paid' : ''))); $('b-writers').append(tr); });
+  D.superwriters.forEach((r) => { const tr = document.createElement('tr'); tr.append(td(r.person, 'who'), td(num(r.submitted_to_audit), 'n'), td(num(r.delivered), 'n'), td(num(r.one_shots), 'n'), td(pct(r.defect_rate_t14), 'n'), r.defect_ok ? pill('Under 20%', 'ok') : pill('20% or more', 'bad'), td(usd(r.total_usd), 'n' + (r.total_usd > 0 ? ' paid' : ''))); $('b-super').append(tr); });
+  D.reviewers.forEach((r) => { const tr = document.createElement('tr'); tr.append(td(r.person, 'who'), td(num(r.touches), 'n'), td(num(r.sent_to_audit), 'n'), td(pct(r.defect_rate), 'n'), r.qualifies ? pill('Qualifies', 'ok') : pill(r.why_not, 'warn'), td(usd(r.total_usd), 'n' + (r.total_usd > 0 ? ' paid' : ''))); $('b-rev').append(tr); });
+
+  // pipeline bars
+  const maxOpen = Math.max(...D.pipeline.map((r) => r.open_tasks));
+  D.pipeline.forEach((r) => {
+    const l = document.createElement('div'); l.className = 'lbl'; l.textContent = r.stage;
+    const t = document.createElement('div'); t.className = 'trk';
+    const b = document.createElement('div'); b.className = 'bar' + (r.open_tasks === maxOpen ? ' top' : ''); b.style.width = `calc((100% - 10rem) * ${r.open_tasks / maxOpen})`;
+    const v = document.createElement('span'); v.className = 'val'; v.textContent = `${r.open_tasks} · median ${r.median_days} d`;
+    t.append(b, v); $('pipe').append(l, t);
+  });
+
+  // ownership
+  const byTask = new Map();
+  D.ledger.forEach((r) => { if (!byTask.has(r.task_id)) byTask.set(r.task_id, []); byTask.get(r.task_id).push(r); });
+  const tasks = [...byTask.entries()].map(([id, rows]) => ({ id, name: rows[0].task_name || id, rows: rows.sort((a, b) => a.seq - b.seq) })).sort((a, b) => a.name.localeCompare(b.name));
+  tasks.forEach((t) => $('task').append(new Option(`${t.name} (${t.rows.length} steps)`, t.id)));
+  const end = Math.max(...D.ledger.map((r) => Date.parse(r.exited_at || r.entered_at)));
+  const palette = ['#2f6f5e', '#b5651d', '#4565a8', '#8a4f9e', '#a8862b', '#2b8a99', '#b0465c', '#5f7d2e'];
+  const fmt = (s) => new Date(s).toISOString().slice(0, 16).replace('T', ' ');
+  const drawTask = (id) => {
+    const t = tasks.find((x) => x.id === id) || tasks[0]; if (!t) return;
+    $('task').value = t.id;
+    const a0 = Date.parse(t.rows[0].entered_at), a1 = Math.max(...t.rows.map((r) => (r.exited_at ? Date.parse(r.exited_at) : end)));
+    const owners = [...new Set(t.rows.map((r) => r.owner).filter(Boolean))];
+    const col = (o) => (o ? palette[owners.indexOf(o) % palette.length] : 'var(--bar)');
+    $('legend').replaceChildren(...owners.map((o) => { const s = document.createElement('span'); const i = document.createElement('i'); i.style.background = col(o); s.append(i, o); return s; }));
+    $('timeline').replaceChildren(); $('b-ledger').replaceChildren();
+    t.rows.forEach((r) => {
+      const s = Date.parse(r.entered_at), e = r.exited_at ? Date.parse(r.exited_at) : end;
+      const l = document.createElement('div'); l.textContent = r.status;
+      const lane = document.createElement('div'); lane.className = 'lane';
+      const seg = document.createElement('div'); seg.className = 'seg'; seg.style.background = col(r.owner);
+      seg.style.left = `${((s - a0) / (a1 - a0 || 1)) * 100}%`; seg.style.width = `${((e - s) / (a1 - a0 || 1)) * 100}%`;
+      seg.title = `${r.status} · ${Number(r.hours).toFixed(1)} h · owner ${r.owner || 'none (pool)'}`;
+      lane.append(seg); $('timeline').append(l, lane);
+      const tr = document.createElement('tr');
+      tr.append(td(r.seq), td(r.status), td(fmt(r.entered_at)), td(r.moved_by || '—', 'who'), td(r.owner || '—', 'who'), td(Number(r.hours).toFixed(1), 'n'));
+      $('b-ledger').append(tr);
+    });
+  };
+  $('task').addEventListener('change', (e) => drawTask(e.target.value));
+  drawTask((tasks.find((t) => t.rows.length >= 10) || tasks[0] || {}).id);
+
+  // alerts
+  const kinds = [...new Set(D.alerts.map((a) => a.kind))];
+  kinds.forEach((k) => {
+    $('kind').append(new Option(k, k));
+    const tile = document.createElement('div'); tile.className = 'tile';
+    const h = document.createElement('h3'); h.textContent = k;
+    const b = document.createElement('span'); b.className = 'big'; b.textContent = num(D.alerts.filter((a) => a.kind === k).length);
+    tile.append(h, b); $('alert-tiles').append(tile);
+  });
+  const drawAlerts = () => {
+    const k = $('kind').value; $('b-alerts').replaceChildren();
+    D.alerts.filter((a) => !k || a.kind === k).forEach((a) => { const tr = document.createElement('tr'); tr.append(td(a.kind), td(a.task), td(a.person || '—', 'who'), td(a.detail)); $('b-alerts').append(tr); });
+  };
+  $('kind').addEventListener('change', drawAlerts); drawAlerts();
+})();
+</script>
+</body>
+</html>
