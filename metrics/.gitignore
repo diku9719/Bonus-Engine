@@ -1,5 +1,5 @@
 # Studio exports and engine output contain contractor activity and draft payouts: keep them out of git
-data/
+
 out/
 *.csv.bak
 query-results-*.csv
