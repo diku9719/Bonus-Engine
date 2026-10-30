@@ -1,0 +1,49 @@
+status_id,name,canonical,stage_category,active,rows,first_seen,last_seen,writer_owned,writer_sendback,superwriter_sendback,review_stage,passed_review_band,audit_work,audit_fail,note
+wfsta_f7a69922e72549879d3b9561a02b0cb2,Drafting,Drafting,writing,True,4170,2026-08-28,2026-10-29,True,False,False,False,False,False,False,
+wfsta_3d30884cb4284ad9b622c1702ae9f134,Needs Edits,Needs Edits,writing,True,2161,2026-08-28,2026-10-29,True,True,False,False,False,False,False,
+wfsta_18af2eb2be254a1f957157523b115528,Running trajectories,Running trajectories,holding_tank,True,1881,2026-09-05,2026-10-28,False,False,False,False,False,False,False,
+wfsta_798b0cf0d4274f29988cd9b0ef9024b7,In second pass,In stage 2 review,reviewing,False,876,2026-09-02,2026-10-12,False,False,False,True,False,False,False,retired; renamed In stage 2 review on 10-12
+wfsta_a155a35ad5cc4f70856b89922bad2723,Drafting (Superwriter),Drafting (Superwriter),writing,True,851,2026-09-27,2026-10-29,True,False,False,False,False,False,False,
+wfsta_bd091b43578a4f0483db8c219c150e7c,In review,In review,reviewing,True,734,2026-08-28,2026-10-29,False,False,False,True,False,False,False,
+wfsta_7a1b781ccd3b4c35b573d14738a182c4,Running trajectories (Superreviewer),Running trajectories (Superreviewer),holding_tank,True,521,2026-10-05,2026-10-29,False,False,False,False,False,False,False,
+wfsta_bcc78f26cd4e442ea14da4f620747142,In audit,In audit,auditing,True,466,2026-09-27,2026-10-29,False,False,False,False,True,True,False,
+wfsta_66a87eed88fb42d5a42083ce48b1accd,Ready for reviewing,Ready for reviewing,reviewing,True,463,2026-08-28,2026-10-29,False,False,False,False,False,False,False,
+wfsta_e710dbb97fbb49b28b405763f53de0dc,Ready for delivery,Ready for delivery,ready_for_delivery,True,401,2026-09-01,2026-10-29,False,False,False,False,True,False,False,
+wfsta_bf8de55e73b84efcb1ab0f7e2d895e69,Ready for auditing,Ready for auditing,auditing,True,287,2026-09-27,2026-10-29,False,False,False,False,True,False,False,
+wfsta_90acaedbddfd4e0aa58627b165c6e511,In stage 2 review,In stage 2 review,reviewing,True,273,2026-10-12,2026-10-29,False,False,False,True,False,False,False,
+wfsta_857d738f9f084803ab3098fbad280fad,Review check,Review check,holding_tank,True,263,2026-09-02,2026-10-29,False,False,False,False,False,False,False,
+wfsta_d10df246e931415ca7494af5d6096375,Needs Edits (Superwriter),Needs Edits (Superwriter),writing,True,221,2026-09-29,2026-10-27,True,False,True,False,False,False,False,
+wfsta_16b5fbddd62c4e68928f6c8400b1698e,In review (Superreviewer),In review (Superreviewer),reviewing,True,202,2026-09-24,2026-10-29,False,False,False,True,False,False,False,
+wfsta_9cfae4f2058d41fcb8f4a19fe70f683b,Passed audit,Passed audit,auditing,True,200,2026-09-27,2026-10-29,False,False,False,False,True,False,False,
+wfsta_9bba3533f0e1437689bcc07e772f3166,In audit,In audit,auditing,False,180,2026-09-16,2026-09-27,False,False,False,False,True,True,False,"retired audit-stage id, replaced 09-27"
+wfsta_ec7ab06682664341a4b311d0cc4489b4,Ready for writing,Ready for writing,writing,True,136,2026-08-26,2026-10-29,True,False,False,False,False,False,False,
+wfsta_c4d28e69563f4750b5fd6dd2b8b820a0,Ready for auditing,Ready for auditing,auditing,False,116,2026-09-16,2026-09-27,False,False,False,False,True,False,False,"retired audit-stage id, replaced 09-27"
+wfsta_b3717af3cb1b4244a66a69b3deb42775,Drafting (Superwriter),Drafting (Superwriter),writing,False,87,2026-09-23,2026-09-27,True,False,False,False,False,False,False,"retired superwriter id, replaced 09-27"
+wfsta_31754684285a451cb4a9f78087e68251,Failed audit,Failed audit,auditing,True,67,2026-09-27,2026-10-29,False,False,False,False,False,False,True,
+wfsta_09ce3d525e46467abac517268fe11f11,Passed audit,Passed audit,auditing,False,64,2026-09-16,2026-09-27,False,False,False,False,True,False,False,"retired audit-stage id, replaced 09-27"
+wfsta_e2182e865efb40079fb59312f7ef3483,Needs Edits (2nd pass),Needs Edits (stage 2),writing,False,64,2026-09-09,2026-10-12,True,True,False,False,False,False,False,retired; renamed Needs Edits (stage 2) on 10-12
+wfsta_a55b7aec74404878bf49ee8ce156227d,Ready for auditing,Ready for auditing,auditing,False,49,2026-09-02,2026-09-16,False,False,False,False,True,False,False,retired audit-stage id (first gen)
+wfsta_537dbc5e07e84fbb8c2d78832291aa8d,Holdout,Holdout,holding_tank,True,49,2026-09-14,2026-10-28,False,False,False,False,True,False,False,
+wfsta_872569198d9848f4bad6f1ddce62e77a,In RFD audit,In RFD audit,auditing,True,30,2026-10-24,2026-10-28,False,False,False,False,True,True,False,
+wfsta_35000c8c8bdd42469bd591911ea846e3,Failed audit,Failed audit,auditing,False,26,2026-09-16,2026-09-27,False,False,False,False,False,False,True,"retired audit-stage id, replaced 09-27"
+wfsta_229b740430314b848b33d8a96f373710,Ready for writing (Superwriter),Ready for writing (Superwriter),writing,True,25,2026-09-29,2026-10-28,True,False,False,False,False,False,False,
+wfsta_34ca383ce1794ebab24ccb3af1367f4d,Ready for RFD audit,Ready for RFD audit,auditing,True,22,2026-10-23,2026-10-27,False,False,False,False,True,False,False,
+wfsta_f1cfaea218154a9db6817f0bb271893f,RFD audit pass,RFD audit pass,auditing,True,19,2026-10-26,2026-10-28,False,False,False,False,True,False,False,
+wfsta_afd300231a1649ca9e11d296aa570450,In audit,In audit,auditing,False,15,2026-09-11,2026-09-16,False,False,False,False,True,True,False,retired audit-stage id (first gen)
+wfsta_f3577518b7f641ae907aac040701227a,Needs Edits (stage 2),Needs Edits (stage 2),writing,True,14,2026-10-12,2026-10-20,True,True,False,False,False,False,False,
+wfsta_5e2ce8da14404856879ad26be7f9a3dd,Drafting (Superwriter) [retiring],Drafting (Superwriter),writing,False,12,2026-09-27,2026-09-27,True,False,False,False,False,False,False,"bulk migration 09-27 23:02, not real work"
+wfsta_ed573cb6844b407e9d919322887faf94,UNRESOLVED (between In review and In second pass),Running trajectories?,holding_tank?,False,8,2026-09-02,2026-09-02,False,False,False,False,False,False,False,task page errors; inferred from neighbours
+wfsta_8cbc81af79b44bdbbe906f8d5162641f,Discarded,Discarded,discarded,True,5,2026-10-07,2026-10-18,False,False,False,False,False,False,False,
+wfsta_f5d5660c6b5a463a87326df758a7c8f0,Passed audit,Passed audit,auditing,False,2,2026-09-16,2026-09-16,False,False,False,False,True,False,False,retired audit-stage id (first gen)
+wfsta_2f4480a250504272bafe375320df065c,Failed audit,Failed audit,auditing,False,1,2026-09-16,2026-09-16,False,False,False,False,False,False,True,retired audit-stage id (first gen)
+wfsta_b4813415f99d4d4e8fe36669696b7b67,RFD audit fail,RFD audit fail,auditing,True,1,2026-10-28,2026-10-28,False,False,False,False,False,False,True,
+wfsta_86b87aca5f1440aca6896cf534b90a98,"(pre-launch smoke test, 2026-08-25)",EXCLUDE,,False,,2026-08-25,2026-08-25,False,False,False,False,False,False,False,exclude
+wfsta_36a97e42de554d91bde924ba35259564,"(pre-launch smoke test, 2026-08-25)",EXCLUDE,,False,,2026-08-25,2026-08-25,False,False,False,False,False,False,False,exclude
+wfsta_fa858d426c6b4b428be7257ad1429ca0,"(pre-launch smoke test, 2026-08-25)",EXCLUDE,,False,,2026-08-25,2026-08-25,False,False,False,False,False,False,False,exclude
+wfsta_2f0d031f16734fdc828e28b7074adb43,"(pre-launch smoke test, 2026-08-25)",EXCLUDE,,False,,2026-08-25,2026-08-25,False,False,False,False,False,False,False,exclude
+wfsta_ee59a02ce8964d24808bb28dd7a24693,"(pre-launch smoke test, 2026-08-25)",EXCLUDE,,False,,2026-08-25,2026-08-25,False,False,False,False,False,False,False,exclude
+wfsta_1617730951cb41948c4c4f07cefabbf1,"(pre-launch smoke test, 2026-08-25)",EXCLUDE,,False,,2026-08-25,2026-08-25,False,False,False,False,False,False,False,exclude
+wfsta_2cae32fff1364a3ba9c3a0df4d7ffdb7,"(pre-launch smoke test, 2026-08-25)",EXCLUDE,,False,,2026-08-25,2026-08-25,False,False,False,False,False,False,False,exclude
+wfsta_24977696d777483aa8db0f7dc2391dd1,"(pre-launch smoke test, 2026-08-25)",EXCLUDE,,False,,2026-08-25,2026-08-25,False,False,False,False,False,False,False,exclude
+wfsta_15777e581f8f439292e4f1cb52c80b66,"(pre-launch smoke test, 2026-08-25)",EXCLUDE,,False,,2026-08-25,2026-08-25,False,False,False,False,False,False,False,exclude
+wfsta_d85afa37fe7c4c5f9589f70266cfea0d,"(pre-launch smoke test, 2026-08-25)",EXCLUDE,,False,,2026-08-25,2026-08-25,False,False,False,False,False,False,False,exclude

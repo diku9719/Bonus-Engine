@@ -1,0 +1,36 @@
+transition_name,from_status,to_status,actor,bonus_meaning
+Claim,Ready for writing,Drafting,annotator (writer),writer takes ownership
+Submit for review,Drafting,Ready for reviewing,annotator,writer submission (attempt)
+Claim review,Ready for reviewing,In review,annotator (reviewer),reviewer takes ownership
+Claim review (Superreviewer),Ready for reviewing,In review (Superreviewer),annotator,superreviewer takes ownership
+Request changes,In review,Needs Edits,annotator,send-back #1 lane (breaks one-shot); review touch
+Request changes (Superreviewer),In review (Superreviewer),Needs Edits,annotator,send-back; review touch
+Resubmit,Needs Edits,In review,annotator,writer resubmission (back to same reviewer)
+Resubmit (Superreviewer),Needs Edits,In review (Superreviewer),annotator,writer resubmission
+Approve (1st pass),In review,Running trajectories,annotator,review pass; review touch
+Approve (1st pass) (Superreviewer),In review (Superreviewer),Running trajectories (Superreviewer),annotator,review pass; review touch
+Runs complete,Running trajectories,In stage 2 review,admin/automation,
+Runs complete (Superreviewer),Running trajectories (Superreviewer),In stage 2 review,admin/automation,
+Request changes (2nd pass),In stage 2 review,Needs Edits (stage 2),annotator,send-back (breaks one-shot); review touch
+Resubmit (2nd pass),Needs Edits (stage 2),Running trajectories,annotator,writer resubmission
+Resubmit (2nd pass) (Superreviewer),Needs Edits (stage 2),Running trajectories (Superreviewer),annotator,writer resubmission
+Send for Delivery Check,In stage 2 review,Review check,annotator,stage-2 pass; review touch
+Send to Holdout,In stage 2 review,Holdout,annotator,stage-2 pass to holdout; review touch
+Route to audit,Review check,Ready for auditing,admin,task enters passed-review band
+Route to delivery,Review check,Ready for delivery,admin,task enters passed-review band (no audit)
+Route to discard,Holdout,Discarded,admin,
+Claim audit,Ready for auditing,In audit,annotator (auditor),
+Pass,In audit,Passed audit,annotator,audit pass (defect denominator)
+Fail,In audit,Failed audit,annotator,audit fail (defect numerator)
+Send to Delivery,Passed audit,Ready for delivery,admin/annotator,
+Send back to Writer,Failed audit,Needs Edits,annotator,
+Send back to Superwriter,Failed audit,Needs Edits (Superwriter),annotator,
+Send back to Reviewer,Failed audit,In stage 2 review,annotator,
+Claim (Superwriter),Ready for writing,Drafting (Superwriter),annotator,superwriter claims fresh task
+Claim (Superwriter queue),Ready for writing (Superwriter),Drafting (Superwriter),annotator,superwriter claims from SW queue
+Submit to Audit (Superwriter),Drafting (Superwriter),Ready for auditing,annotator,superwriter submission (throughput)
+Resubmit to Audit (Superwriter),Needs Edits (Superwriter),Ready for auditing,annotator,superwriter resubmission
+Sample for RFD audit,Ready for delivery,Ready for RFD audit,admin,
+Claim RFD audit,Ready for RFD audit,In RFD audit,annotator,
+RFD audit pass,In RFD audit,RFD audit pass,annotator,defect denominator
+RFD audit fail,In RFD audit,RFD audit fail,annotator,defect numerator

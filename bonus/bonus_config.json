@@ -1,0 +1,143 @@
+{
+  "_readme": "Weekly Enki bonus settings. Edit this file when Sara posts a new structure; no code change needed. Times are UTC (PT 9:00 AM PDT = 16:00Z; 12:00 PM PST = 20:00Z). Tiers pay the HIGHEST level reached, never the sum. Rates are fractions (0.30 = 30%).",
+  "week_label": "Oct 26 - Nov 2, 2026",
+  "source_posts": [
+    "Sara M. #enki-announcements 2026-10-26",
+    "Sara M. #enki-superwriters 2026-10-26",
+    "Zayn answers 2026-10-29"
+  ],
+  "window": {
+    "start_utc": "2026-10-26T16:00:00Z",
+    "end_utc": "2026-11-02T20:00:00Z"
+  },
+  "writer": {
+    "gate": {
+      "all_time_aht_max_hours": 22
+    },
+    "one_shot_usd": 150,
+    "streak_usd": 150,
+    "two_shot_usd": 100,
+    "throughput_tiers": [
+      {
+        "min_tasks": 2,
+        "usd": 200
+      },
+      {
+        "min_tasks": 3,
+        "usd": 350
+      }
+    ]
+  },
+  "reviewer": {
+    "gate": {
+      "min_sent_to_audit_in_window": 2,
+      "all_time_defect_rate_max": 0.3
+    },
+    "touch_tiers": [
+      {
+        "min_touches": 6,
+        "usd": 100
+      },
+      {
+        "min_touches": 9,
+        "usd": 200
+      },
+      {
+        "min_touches": 12,
+        "usd": 300
+      }
+    ],
+    "defect_rate_tiers": [
+      {
+        "max_rate": 0.15,
+        "usd": 50
+      },
+      {
+        "max_rate": 0.1,
+        "usd": 100
+      }
+    ],
+    "defect_rate_window": "all_time"
+  },
+  "superwriter": {
+    "gate": {
+      "defect_rate_below": 0.2,
+      "defect_rate_window_days": 14,
+      "all_time_aht_max_hours": 16
+    },
+    "one_shot_usd": 200,
+    "streak_usd": 150,
+    "throughput_tiers": [
+      {
+        "min_tasks": 2,
+        "usd": 200
+      },
+      {
+        "min_tasks": 4,
+        "usd": 500
+      },
+      {
+        "min_tasks": 6,
+        "usd": 800
+      }
+    ]
+  },
+  "stages": {
+    "passed_review_band": [
+      "Ready for auditing",
+      "In audit",
+      "Passed audit",
+      "Holdout",
+      "Ready for delivery",
+      "Ready for RFD audit",
+      "In RFD audit",
+      "RFD audit pass"
+    ],
+    "writer_sendback": [
+      "Needs Edits",
+      "Needs Edits (stage 2)"
+    ],
+    "superwriter_sendback": [
+      "Needs Edits (Superwriter)"
+    ],
+    "superwriter_lane": [
+      "Ready for writing (Superwriter)",
+      "Drafting (Superwriter)",
+      "Needs Edits (Superwriter)"
+    ],
+    "review": [
+      "In review",
+      "In stage 2 review",
+      "In review (Superreviewer)"
+    ],
+    "audit_fail": [
+      "Failed audit",
+      "RFD audit fail"
+    ],
+    "terminal": [
+      "Ready for delivery",
+      "Discarded",
+      "RFD audit pass"
+    ],
+    "owned_work": [
+      "Drafting",
+      "Drafting (Superwriter)",
+      "Needs Edits",
+      "Needs Edits (stage 2)",
+      "Needs Edits (Superwriter)",
+      "In review",
+      "In stage 2 review",
+      "In review (Superreviewer)",
+      "In audit",
+      "In RFD audit"
+    ]
+  },
+  "rules": {
+    "streaks_as_separate_pairs": true,
+    "two_shot_pays_even_if_audit_later_fails": true,
+    "rerun_loop_is_not_a_touch": true,
+    "payout_email_domain": "@mercor.expert",
+    "alert_needs_edits_rounds": 3,
+    "alert_idle_days": 3
+  }
+}
