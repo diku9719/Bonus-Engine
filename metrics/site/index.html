@@ -139,15 +139,16 @@
   const num = (v) => (v == null ? '—' : Number(v).toLocaleString('en-US'));
   const td = (text, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = text; return c; };
   const pill = (text, tone) => { const c = document.createElement('td'); const s = document.createElement('span'); s.className = 'pill ' + tone; s.textContent = text; c.append(s); return c; };
-  const load = async (n) => { const r = await fetch(`data/${n}.json`, { cache: 'no-store' }); if (!r.ok) throw new Error(`${n}.json: ${r.status}`); return r.json(); };
+  const load = async (n) => { const r = await fetch(`data/${n}.json`, { cache: 'no-store' }); if (!r.ok) throw new Error(`${n}.json (${r.status})`); return r.json(); };
 
-  let D;
-  try {
-    const names = ['meta', 'writers', 'reviewers', 'superwriters', 'pipeline', 'alerts', 'ledger'];
-    D = Object.fromEntries(await Promise.all(names.map(async (n) => [n, await load(n)])));
-  } catch (e) {
+  // Load every file on its own, so one missing file only blanks its own view.
+  const names = ['meta', 'writers', 'reviewers', 'superwriters', 'pipeline', 'alerts', 'ledger'];
+  const results = await Promise.allSettled(names.map(load));
+  const D = {}; const missing = [];
+  results.forEach((r, i) => { if (r.status === 'fulfilled') D[names[i]] = r.value; else { D[names[i]] = names[i] === 'meta' ? {} : []; missing.push(r.reason.message); } });
+  if (missing.length === names.length) {
     $('summary').innerHTML = ''; const s = document.createElement('span'); s.className = 'err';
-    s.textContent = 'Could not load the data files. Run build_site.py before deploying. (' + e.message + ')'; $('summary').append(s); return;
+    s.textContent = 'Could not load any data files. Run build_site.py with --deploy-dir and deploy from that folder.'; $('summary').append(s); return;
   }
 
   // tabs
@@ -162,9 +163,10 @@
   const total = sum(D.writers) + sum(D.superwriters) + sum(D.reviewers);
   const open = D.pipeline.reduce((s, r) => s + r.open_tasks, 0);
   $('summary').innerHTML = '';
-  $('summary').append(`Week of ${D.meta.week}, data through ${D.meta.data_through}: `, Object.assign(document.createElement('b'), { textContent: usd(total) }),
+  $('summary').append(`Week of ${D.meta.week || '—'}, data through ${D.meta.data_through || '—'}: `, Object.assign(document.createElement('b'), { textContent: usd(total) }),
     ' in draft bonuses before the AHT gate and roster check; ', Object.assign(document.createElement('b'), { textContent: num(open) }),
     ' tasks unfinished; ', Object.assign(document.createElement('b'), { textContent: num(D.alerts.length) }), ' alerts.');
+  if (missing.length) { const w = document.createElement('span'); w.className = 'err'; w.textContent = ` Missing from this deploy: ${missing.join(', ')}. Re-run build_site.py with --deploy-dir and redeploy.`; $('summary').append(w); }
   [['writers', 't-writers'], ['superwriters', 't-super'], ['reviewers', 't-rev']].forEach(([k, id]) => { $(id).textContent = usd(sum(D[k])); $(id + '-n').textContent = `${earning(D[k])} of ${D[k].length} earning`; });
 
   // bonus tables
@@ -187,9 +189,10 @@
   D.ledger.forEach((r) => { if (!byTask.has(r.task_id)) byTask.set(r.task_id, []); byTask.get(r.task_id).push(r); });
   const tasks = [...byTask.entries()].map(([id, rows]) => ({ id, name: rows[0].task_name || id, rows: rows.sort((a, b) => a.seq - b.seq) })).sort((a, b) => a.name.localeCompare(b.name));
   tasks.forEach((t) => $('task').append(new Option(`${t.name} (${t.rows.length} steps)`, t.id)));
-  const end = Math.max(...D.ledger.map((r) => Date.parse(r.exited_at || r.entered_at)));
+  const end = D.ledger.reduce((m, r) => Math.max(m, Date.parse(r.exited_at || r.entered_at)), 0);
   const palette = ['#2f6f5e', '#b5651d', '#4565a8', '#8a4f9e', '#a8862b', '#2b8a99', '#b0465c', '#5f7d2e'];
   const fmt = (s) => new Date(s).toISOString().slice(0, 16).replace('T', ' ');
+  if (!D.ledger.length) { const p = document.createElement('p'); p.className = 'note err'; p.textContent = 'The ownership data (ledger.json) is not in this deploy.'; $('timeline').before(p); }
   const drawTask = (id) => {
     const t = tasks.find((x) => x.id === id) || tasks[0]; if (!t) return;
     $('task').value = t.id;

@@ -72,5 +72,10 @@ if DEPLOY:
     if os.path.exists(stale): os.remove(stale)   # login guard removed for now
     for f in os.listdir(DATA):
         shutil.copy2(os.path.join(DATA, f), os.path.join(DEPLOY, "data", f))
-    print(f"deploy folder ready: {DEPLOY} ({len(os.listdir(os.path.join(DEPLOY, 'data')))} data files)")
+    need = ["meta", "writers", "reviewers", "superwriters", "pipeline", "alerts", "ledger"]
+    for n in need:
+        f = os.path.join(DEPLOY, "data", f"{n}.json")
+        if not os.path.exists(f): sys.exit(f"ERROR: {f} is missing; do not deploy")
+        print(f"  data/{n}.json  {os.path.getsize(f) / 1024:,.0f} KB")
+    print(f"deploy folder ready: {DEPLOY} (all {len(need)} data files present)")
     print(f"next: cd \"{DEPLOY}\" && vercel deploy --prod")
