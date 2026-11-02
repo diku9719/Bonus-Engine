@@ -4,7 +4,8 @@
   "source_posts": [
     "Sara M. #enki-announcements 2026-10-26",
     "Sara M. #enki-superwriters 2026-10-26",
-    "Zayn answers 2026-10-29"
+    "Zayn answers 2026-10-29",
+    "Sara M. #enki-announcements 2026-10-31 (Halloween Bonus Special)"
   ],
   "window": {
     "start_utc": "2026-10-26T16:00:00Z",
@@ -26,7 +27,9 @@
         "min_tasks": 3,
         "usd": 350
       }
-    ]
+    ],
+    "structure_name": "Oct 26 base",
+    "three_shot_usd": 0
   },
   "reviewer": {
     "gate": {
@@ -139,5 +142,16 @@
     "payout_email_domain": "@mercor.expert",
     "alert_needs_edits_rounds": 3,
     "alert_idle_days": 3
-  }
+  },
+  "writer_rate_changes": [
+    {
+      "_note": "A writer task is paid at the rates in force when it was FIRST SUBMITTED FOR REVIEW. effective_from_utc = Sara's #enki-announcements post, shown in Slack as 'Friday 7:28 PM' in the viewer's timezone (Europe/Rome, UTC+1) = 18:28 UTC = 11:28 AM PDT. If the viewer's Slack timezone differs, correct this value.",
+      "structure_name": "Halloween Bonus Special",
+      "effective_from_utc": "2026-10-31T18:28:00Z",
+      "one_shot_usd": 250,
+      "streak_usd": 250,
+      "two_shot_usd": 100,
+      "three_shot_usd": 50
+    }
+  ]
 }

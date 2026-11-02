@@ -87,8 +87,8 @@
     </div>
     <div class="card">
       <h2>Writers</h2>
-      <p class="note">One-shot $150 (passed review with no Needs Edits), +$150 per streak pair, two-shot $100, throughput 2 → $200 or 3 → $350 (highest tier only). AHT gate (under 22 h) not applied yet.</p>
-      <div class="scroll"><table><thead><tr><th>Writer</th><th class="n">Passed</th><th class="n">One-shots</th><th class="n">Streaks</th><th class="n">Two-shots</th><th class="n">Throughput</th><th class="n">Total</th></tr></thead><tbody id="b-writers"></tbody></table></div>
+      <p class="note">Rates follow when the writer first submitted the task. Submitted before the Halloween announcement: one-shot $150, streak +$150, two-shot $100. Submitted after it (Halloween Bonus Special): one-shot $250, streak +$250, two-shot $100, three-shot $50. Throughput 2 → $200 or 3 → $350 for all (highest tier only). AHT gate (under 22 h) not applied yet. <span id="w-change"></span></p>
+      <div class="scroll"><table><thead><tr><th>Writer</th><th class="n">Passed</th><th class="n">One-shots</th><th class="n">Streaks</th><th class="n">Two-shots</th><th class="n">Three-shots</th><th class="n">Throughput</th><th class="n">Old rates</th><th class="n">Halloween rates</th><th class="n">Total</th></tr></thead><tbody id="b-writers"></tbody></table></div>
     </div>
     <div class="card">
       <h2>Superwriters</h2>
@@ -170,7 +170,8 @@
   [['writers', 't-writers'], ['superwriters', 't-super'], ['reviewers', 't-rev']].forEach(([k, id]) => { $(id).textContent = usd(sum(D[k])); $(id + '-n').textContent = `${earning(D[k])} of ${D[k].length} earning`; });
 
   // bonus tables
-  D.writers.forEach((r) => { const tr = document.createElement('tr'); tr.append(td(r.person, 'who'), td(num(r.passed), 'n'), td(num(r.one_shots), 'n'), td(num(r.streaks), 'n'), td(num(r.two_shots), 'n'), td(num(r.throughput_tasks), 'n'), td(usd(r.total_usd), 'n' + (r.total_usd > 0 ? ' paid' : ''))); $('b-writers').append(tr); });
+  D.writers.forEach((r) => { const tr = document.createElement('tr'); tr.append(td(r.person, 'who'), td(num(r.passed), 'n'), td(num(r.one_shots), 'n'), td(num(r.streaks), 'n'), td(num(r.two_shots), 'n'), td(num(r.three_shots), 'n'), td(num(r.throughput_tasks), 'n'), td(usd(r.usd_base_rules), 'n'), td(usd(r.usd_new_rules), 'n'), td(usd(r.total_usd), 'n' + (r.total_usd > 0 ? ' paid' : ''))); $('b-writers').append(tr); });
+  if (D.meta.writer_change) $('w-change').textContent = `Cutoff used: ${D.meta.writer_change}.`;
   D.superwriters.forEach((r) => { const tr = document.createElement('tr'); tr.append(td(r.person, 'who'), td(num(r.submitted_to_audit), 'n'), td(num(r.delivered), 'n'), td(num(r.one_shots), 'n'), td(pct(r.defect_rate_t14), 'n'), r.defect_ok ? pill('Under 20%', 'ok') : pill('20% or more', 'bad'), td(usd(r.total_usd), 'n' + (r.total_usd > 0 ? ' paid' : ''))); $('b-super').append(tr); });
   D.reviewers.forEach((r) => { const tr = document.createElement('tr'); tr.append(td(r.person, 'who'), td(num(r.touches), 'n'), td(num(r.sent_to_audit), 'n'), td(pct(r.defect_rate), 'n'), r.qualifies ? pill('Qualifies', 'ok') : pill(r.why_not, 'warn'), td(usd(r.total_usd), 'n' + (r.total_usd > 0 ? ' paid' : ''))); $('b-rev').append(tr); });
 

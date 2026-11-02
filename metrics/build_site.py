@@ -27,7 +27,7 @@ def dump(df, name):
 
 w = rd("bonus_writers.csv"); w = w[w.expert]
 dump(w.assign(person=w.person.map(short)).rename(columns={"total_usd_before_AHT_gate": "total_usd"})
-     [["person","passed","one_shots","streaks","two_shots","throughput_tasks","total_usd"]].sort_values("total_usd", ascending=False), "writers")
+     [["person","passed","one_shots","streaks","two_shots","three_shots","throughput_tasks","usd_base_rules","usd_new_rules","total_usd"]].sort_values("total_usd", ascending=False), "writers")
 r = rd("bonus_reviewers.csv"); r = r[r.expert]
 dump(r.assign(person=r.person.map(short), why_not=r.why_not.fillna(""))
      [["person","touches","sent_to_audit","defect_rate","qualifies","why_not","total_usd"]].sort_values(["total_usd","touches"], ascending=False), "reviewers")
@@ -62,7 +62,8 @@ L["moved_by"] = [short(o) if isinstance(o, str) else i for o, i in zip(L.entered
 dump(L[["task_id","task_name","seq","status","entered_at","exited_at","owner_s","moved_by","hours_in_status"]]
      .rename(columns={"owner_s": "owner", "hours_in_status": "hours"}), "ledger")
 
-json.dump({"week": CFG["week_label"], "data_through": str(pd.to_datetime(L.entered_at, utc=True, format="ISO8601").max())[:16] + " UTC"},
+ch = sorted(CFG.get("writer_rate_changes", []), key=lambda c: c["effective_from_utc"])
+json.dump({"week": CFG["week_label"], "writer_change": (ch[-1]["structure_name"] + " from " + ch[-1]["effective_from_utc"][:16].replace("T", " ") + " UTC") if ch else None, "data_through": str(pd.to_datetime(L.entered_at, utc=True, format="ISO8601").max())[:16] + " UTC"},
           open(os.path.join(DATA, "meta.json"), "w"))
 print("site data written to", DATA)
 if DEPLOY:

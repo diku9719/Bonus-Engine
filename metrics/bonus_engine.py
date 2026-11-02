@@ -115,21 +115,54 @@ def rate_bonus(rate, tiers):
     return best
 
 # ---------------- WRITERS ----------------
+# Rates can change mid-week (writer_rate_changes). Each task is paid at the rates in force when its writer
+# FIRST SUBMITTED it for review; a streak pair is paid at the rates of the task that completes the pair.
+_changes = sorted(CFG.get("writer_rate_changes", []), key=lambda c: c["effective_from_utc"])
+def writer_rates(first_submit):
+    r = dict(WCFG)
+    for c in _changes:
+        if pd.notna(first_submit) and pd.Timestamp(first_submit) >= pd.Timestamp(c["effective_from_utc"]):
+            r.update({k: v for k, v in c.items() if not k.startswith("_") and k != "effective_from_utc"})
+    return r
+
+def streak_pairs(seq):
+    pairs = []; i = 0
+    while i < len(seq) - 1:
+        if seq[i] and seq[i+1]:
+            pairs.append(i + 1); i += 2 if RULES["streaks_as_separate_pairs"] else 1
+        else: i += 1
+    return pairs                                   # index of the task completing each pair
+
 W = T[(T.lane == "writer") & T.credited.notna() & T.passed_review_at.apply(inwin)].copy()
-W["one_shot"] = W.writer_sendbacks.eq(0); W["two_shot"] = W.writer_sendbacks.eq(1)
+W["one_shot"] = W.writer_sendbacks.eq(0); W["two_shot"] = W.writer_sendbacks.eq(1); W["three_shot"] = W.writer_sendbacks.eq(2)
 W["counts_throughput"] = ~W.last_audit_failed
 if not RULES["two_shot_pays_even_if_audit_later_fails"]:
-    W.loc[W.last_audit_failed, "two_shot"] = False
+    W.loc[W.last_audit_failed, ["two_shot","three_shot"]] = False
+rates = [writer_rates(fs) for fs in W.first_submit]
+W["structure"] = [r.get("structure_name", "base") for r in rates]
+W["task_usd"] = [r["one_shot_usd"] if o else r["two_shot_usd"] if t2 else r.get("three_shot_usd", 0) if t3 else 0
+                 for r, o, t2, t3 in zip(rates, W.one_shot, W.two_shot, W.three_shot)]
+W["streak_usd"] = 0
+W = W.sort_values(["credited", "passed_review_at"])
+for p, g in W.groupby("credited"):
+    for j in streak_pairs(list(g.one_shot)):
+        idx = g.index[j]; W.loc[idx, "streak_usd"] = writer_rates(W.loc[idx, "first_submit"])["streak_usd"]
 rows = []
-for p, g in W.sort_values("passed_review_at").groupby("credited"):
-    streaks = count_streaks(list(g.one_shot))
+for p, g in W.groupby("credited"):
     tp = int(g.counts_throughput.sum())
-    rows.append(dict(person=p, passed=len(g), one_shots=int(g.one_shot.sum()), streaks=streaks,
-        two_shots=int(g.two_shot.sum()), throughput_tasks=tp,
-        one_shot_usd=WCFG["one_shot_usd"]*int(g.one_shot.sum()), streak_usd=WCFG["streak_usd"]*streaks, two_shot_usd=WCFG["two_shot_usd"]*int(g.two_shot.sum()),
-        throughput_usd=tier(tp, WCFG["throughput_tiers"], "min_tasks"), tasks=", ".join(g.task_name.astype(str))))
+    sh = lambda col: int(g[col].sum())
+    pay = lambda mask: int((g.task_usd[mask]).sum() + (g.streak_usd[mask]).sum())
+    base_name = WCFG.get("structure_name", "base")
+    rows.append(dict(person=p, passed=len(g), one_shots=sh("one_shot"), streaks=int((g.streak_usd > 0).sum()),
+        two_shots=sh("two_shot"), three_shots=sh("three_shot"), throughput_tasks=tp,
+        one_shot_usd=int(g.task_usd[g.one_shot].sum()), streak_usd=int(g.streak_usd.sum()),
+        two_shot_usd=int(g.task_usd[g.two_shot].sum()), three_shot_usd=int(g.task_usd[g.three_shot].sum()),
+        throughput_usd=tier(tp, WCFG["throughput_tiers"], "min_tasks"),
+        usd_base_rules=pay(g.structure == base_name), usd_new_rules=pay(g.structure != base_name),
+        tasks=", ".join(g.task_name.astype(str))))
 WR = pd.DataFrame(rows)
-if len(WR): WR["total_usd_before_AHT_gate"] = WR[["one_shot_usd","streak_usd","two_shot_usd","throughput_usd"]].sum(axis=1)
+if len(WR): WR["total_usd_before_AHT_gate"] = WR[["one_shot_usd","streak_usd","two_shot_usd","three_shot_usd","throughput_usd"]].sum(axis=1)
+WTASKS = W[["task_id","task_name","credited","first_submit","passed_review_at","writer_sendbacks","structure","task_usd","streak_usd","counts_throughput"]]
 
 # ---------------- REVIEWERS ----------------
 TOw = TO[TO["at"].apply(inwin)]
@@ -229,7 +262,7 @@ for tid, g in L.sort_values(["task_id","seq"]).groupby("task_id"):
 SR = pd.DataFrame(selfroute)
 out = os.environ.get("BONUS_OUT", os.path.join(HERE, "out")); os.makedirs(out, exist_ok=True)
 T.to_csv(f"{out}/tasks_derived.csv", index=False); TO.to_csv(f"{out}/review_touches.csv", index=False); AO.to_csv(f"{out}/audit_outcomes.csv", index=False)
-WR.to_csv(f"{out}/bonus_writers.csv", index=False); RV.to_csv(f"{out}/bonus_reviewers.csv", index=False); SWR.to_csv(f"{out}/bonus_superwriters.csv", index=False)
+WR.to_csv(f"{out}/bonus_writers.csv", index=False); WTASKS.to_csv(f"{out}/bonus_writer_tasks.csv", index=False); RV.to_csv(f"{out}/bonus_reviewers.csv", index=False); SWR.to_csv(f"{out}/bonus_superwriters.csv", index=False)
 alerts_3rd.to_csv(f"{out}/alert_3plus_needs_edits.csv", index=False); stuck.to_csv(f"{out}/alert_stuck.csv", index=False); SR.to_csv(f"{out}/alert_self_routed_to_sw.csv", index=False); idle.to_csv(f"{out}/alert_claimed_idle.csv", index=False); NWO.to_csv(f"{out}/alert_new_work_with_open_edits.csv", index=False); OFF.to_csv(f"{out}/alert_off_flow_moves.csv", index=False)
 print("config:", CFG["week_label"], "| data through", DATA_THROUGH, "| unknown statuses:", unknown)
 print("tasks", len(T), "| writer-lane passed in window", len(W), "| touches in window", len(TOw), "| audit outcomes all-time", len(AO))

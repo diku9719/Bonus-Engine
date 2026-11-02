@@ -9,7 +9,7 @@ Computes the weekly Project Enki 2 (WS) bonus table and lead alerts from Studio'
 | `sql/enki_ledger.sql` | Read-only query for Studio's Query tab: one row per task per status (owner, who moved it, hours, last edit). Keep the `LIMIT 10000`: Studio caps results at 100 rows without it. |
 | `enki_status_map.json` / `.csv` | All 48 status ids seen on Enki, retired ids mapped to current names, each tagged with its bonus role. |
 | `enki_flow_transitions.csv` | The live workflow's 35 actions (from, to, who). Used to flag off-flow moves. |
-| `bonus_config.json` | The week's rules: window, gates, tiers, amounts, stage sets, rule switches. Edit this when a new bonus structure is posted. |
+| `bonus_config.json` | The week's rules: window, gates, tiers, amounts, stage sets, rule switches. Edit this when a new bonus structure is posted. A mid-week rate change goes in `writer_rate_changes` with the announcement's UTC post time; each writer task is paid at the rates in force when it was first submitted for review. |
 | `bonus_engine.py` | Reads the export + map + config; writes bonus tables and alert lists to `out/`. |
 | `build_site.py` | Turns `out/` + the export into `site/data/*.json` for the lead site. |
 | `site/` | The lead site: `index.html` (Bonuses, Pipeline, Ownership, Alerts). |
