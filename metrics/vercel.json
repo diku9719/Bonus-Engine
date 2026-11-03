@@ -1,0 +1,9 @@
+{
+  "outputDirectory": "public",
+  "functions": {
+    "api/refresh.py": {
+      "maxDuration": 60,
+      "includeFiles": "**"
+    }
+  }
+}

@@ -1,21 +1,15 @@
 """Turn the engine's output + the Studio ledger export into the JSON files the lead site reads.
 
-usage: python build_site.py <ledger export .csv> [--deploy-dir DIR]
-Run bonus_engine.py on the same export first. Writes site/data/*.json (git-ignored: it holds payouts).
-With --deploy-dir, also assembles a ready-to-deploy copy of the site (page + data) in DIR,
-outside the git repo, so the Vercel CLI cannot skip the git-ignored data files."""
-import json, os, shutil, sys
+usage: python build_site.py <ledger export .csv>
+Run bonus_engine.py on the same export first. Writes public/data/*.json (git-ignored: it holds payouts)
+for a local preview. On Vercel, api/refresh.py runs this same script on live Studio data
+(SITE_DATA points it at a temporary folder), so nothing here needs deploying."""
+import json, os, sys
 import pandas as pd
-
-args = sys.argv[1:]
-DEPLOY = None
-if "--deploy-dir" in args:
-    i = args.index("--deploy-dir"); DEPLOY = os.path.abspath(os.path.expanduser(args[i + 1])); del args[i:i + 2]
-sys.argv = [sys.argv[0]] + args
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.environ.get("BONUS_OUT", os.path.join(HERE, "out"))
-DATA = os.path.join(HERE, "site", "data"); os.makedirs(DATA, exist_ok=True)
+DATA = os.environ.get("SITE_DATA", os.path.join(HERE, "public", "data")); os.makedirs(DATA, exist_ok=True)
 CFG = json.load(open(os.environ.get("BONUS_CONFIG", os.path.join(HERE, "bonus_config.json"))))
 if len(sys.argv) < 2: sys.exit("usage: python build_site.py <ledger export .csv>")
 short = lambda e: e.split("@")[0] if isinstance(e, str) else None
@@ -66,17 +60,3 @@ ch = sorted(CFG.get("writer_rate_changes", []), key=lambda c: c["effective_from_
 json.dump({"week": CFG["week_label"], "writer_change": (ch[-1]["structure_name"] + " from " + ch[-1]["effective_from_utc"][:16].replace("T", " ") + " UTC") if ch else None, "data_through": str(pd.to_datetime(L.entered_at, utc=True, format="ISO8601").max())[:16] + " UTC"},
           open(os.path.join(DATA, "meta.json"), "w"))
 print("site data written to", DATA)
-if DEPLOY:
-    os.makedirs(os.path.join(DEPLOY, "data"), exist_ok=True)
-    shutil.copy2(os.path.join(HERE, "site", "index.html"), os.path.join(DEPLOY, "index.html"))
-    stale = os.path.join(DEPLOY, "middleware.js")
-    if os.path.exists(stale): os.remove(stale)   # login guard removed for now
-    for f in os.listdir(DATA):
-        shutil.copy2(os.path.join(DATA, f), os.path.join(DEPLOY, "data", f))
-    need = ["meta", "writers", "reviewers", "superwriters", "pipeline", "alerts", "ledger"]
-    for n in need:
-        f = os.path.join(DEPLOY, "data", f"{n}.json")
-        if not os.path.exists(f): sys.exit(f"ERROR: {f} is missing; do not deploy")
-        print(f"  data/{n}.json  {os.path.getsize(f) / 1024:,.0f} KB")
-    print(f"deploy folder ready: {DEPLOY} (all {len(need)} data files present)")
-    print(f"next: cd \"{DEPLOY}\" && vercel deploy --prod")
