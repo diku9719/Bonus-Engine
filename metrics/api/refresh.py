@@ -11,6 +11,8 @@ Vercel environment variables:
   STUDIO_COMPANY_ID      optional  default comp_2fa4115109d741cd94a3c409ed89e61f (the company Studio uses for this project); sent as X-Company-Id
   STUDIO_EXTRA_HEADERS   optional  JSON object of extra headers if Studio needs them, e.g. {"x-company-id": "comp_..."}
   STUDIO_API_URL         optional  default https://api.studio.mercor.com/querier/unstructured
+  STUDIO_USER_AGENT      optional  default "enki-metrics-dashboard/1.0". Studio sits behind Cloudflare, which blocks
+                                   Python's default "Python-urllib" signature (error 1010).
 """
 from http.server import BaseHTTPRequestHandler
 import csv, json, os, subprocess, sys, tempfile, time, urllib.error, urllib.request
@@ -29,6 +31,7 @@ def studio_query(sql):
     if not key:
         raise RuntimeError("STUDIO_API_KEY is not set in the Vercel project")
     headers = {"Content-Type": "application/json", "Accept": "application/json",
+               "User-Agent": os.environ.get("STUDIO_USER_AGENT", "enki-metrics-dashboard/1.0"),
                # Studio scopes the querier to one project: it answers "X-Campaign-Id header required" without this
                "X-Campaign-Id": os.environ.get("STUDIO_CAMPAIGN_ID", "camp_0d3de3902b854d7f8d5fc03b8490aa60"),
                "X-Company-Id": os.environ.get("STUDIO_COMPANY_ID", "comp_2fa4115109d741cd94a3c409ed89e61f")}
@@ -43,7 +46,14 @@ def studio_query(sql):
         with urllib.request.urlopen(req, timeout=45) as r:
             return json.load(r)
     except urllib.error.HTTPError as e:
-        detail = e.read()[:300].decode("utf-8", "replace")
+        raw = e.read()[:2000].decode("utf-8", "replace")
+        try:                                   # Cloudflare / FastAPI JSON errors: keep the readable part
+            j = json.loads(raw)
+            detail = j.get("title") or j.get("detail") or raw
+            if j.get("error_code"):
+                detail = f"{detail} (Cloudflare {j['error_code']})"
+        except ValueError:
+            detail = raw[:200]
         raise RuntimeError(f"Studio answered {e.code}: {detail}") from None
 
 

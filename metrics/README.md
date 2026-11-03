@@ -41,6 +41,7 @@ The key never reaches the browser, and the SQL is fixed on the server.
 | `DASH_USERS` | Logins: `user:password` pairs separated by commas, e.g. `zayn:LongPassw0rd,manav:Another-0ne`. If missing, nobody gets in. |
 | `STUDIO_API_KEY` | The RL Studio key (`rls-sk-...`). |
 | `STUDIO_CAMPAIGN_ID`, `STUDIO_COMPANY_ID` | Optional. Default to Project Enki 2 (WS) (`camp_0d3de...`, `comp_2fa41...`). Studio requires both as headers. |
+| `STUDIO_USER_AGENT` | Optional. Defaults to `enki-metrics-dashboard/1.0`. Studio's Cloudflare blocks Python's default signature (error 1010). |
 | `STUDIO_AUTH` | Optional. `x-api-key` if Studio wants the key in that header instead of `Authorization: Bearer`. |
 
 Changing a variable needs a redeploy (Deployments → ⋯ → Redeploy).

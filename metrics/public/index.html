@@ -265,7 +265,8 @@
       D = body; missing = []; render();
       st.textContent = `Live from Studio: data through ${D.meta.data_through}, refreshed ${D.meta.refreshed_at} (${D.meta.refresh_seconds} s).`;
     } catch (e) {
-      st.classList.add('err'); st.textContent = `${e.message}. Still showing the previous data.`;
+      st.classList.add('err'); st.textContent = D.meta && D.meta.data_through ? `${e.message}. Still showing the previous data.` : `${e.message}.`;
+      if (!(D.meta && D.meta.data_through)) $('summary').textContent = 'Could not load live data from Studio. See the message under the button, then press Refresh to try again.';
     } finally {
       btn.textContent = 'Refresh from Studio';
       setTimeout(() => { btn.disabled = false; }, COOLDOWN_MS);
