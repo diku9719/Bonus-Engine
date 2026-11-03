@@ -1,7 +1,7 @@
 """POST /api/refresh — pull live task history from RL Studio and recompute the dashboard.
 
 Runs on Vercel (Python runtime). Behind middleware.js, so only logged-in users reach it.
-The Studio key never leaves the server. The SQL is fixed in sql/enki_ledger_api.sql;
+The Studio key never leaves the server. The SQL is fixed in engine/enki_ledger_api.sql;
 nothing the browser sends is passed to Studio.
 
 Vercel environment variables:
@@ -16,8 +16,8 @@ from http.server import BaseHTTPRequestHandler
 import csv, json, os, subprocess, sys, tempfile, time, urllib.error, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the metrics/ folder (Vercel Root Directory)
-ENGINE = ROOT                         # bonus_engine.py, build_site.py, settings and status map live here
-SQL_FILE = os.path.join(ROOT, "sql", "enki_ledger_api.sql")
+ENGINE = os.path.join(ROOT, "engine")   # bonus_engine.py, build_site.py, settings, status map, query
+SQL_FILE = os.path.join(ENGINE, "enki_ledger_api.sql")
 REUSE_S = 60                          # a refresh within 60 s of the last one (same server) reuses that result
 _last = {"t": 0.0, "data": None}
 NAMES = ["meta", "writers", "reviewers", "superwriters", "pipeline", "alerts", "ledger"]

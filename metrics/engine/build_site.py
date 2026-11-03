@@ -1,7 +1,7 @@
 """Turn the engine's output + the Studio ledger export into the JSON files the lead site reads.
 
 usage: python build_site.py <ledger export .csv>
-Run bonus_engine.py on the same export first. Writes public/data/*.json (git-ignored: it holds payouts)
+Run bonus_engine.py on the same export first. Writes ../public/data/*.json (git-ignored: it holds payouts)
 for a local preview. On Vercel, api/refresh.py runs this same script on live Studio data
 (SITE_DATA points it at a temporary folder), so nothing here needs deploying."""
 import json, os, sys
@@ -9,7 +9,7 @@ import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.environ.get("BONUS_OUT", os.path.join(HERE, "out"))
-DATA = os.environ.get("SITE_DATA", os.path.join(HERE, "public", "data")); os.makedirs(DATA, exist_ok=True)
+DATA = os.environ.get("SITE_DATA", os.path.join(HERE, "..", "public", "data")); os.makedirs(DATA, exist_ok=True)
 CFG = json.load(open(os.environ.get("BONUS_CONFIG", os.path.join(HERE, "bonus_config.json"))))
 if len(sys.argv) < 2: sys.exit("usage: python build_site.py <ledger export .csv>")
 short = lambda e: e.split("@")[0] if isinstance(e, str) else None

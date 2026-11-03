@@ -8,9 +8,9 @@ the page pulls it from Studio when someone opens it or presses **Refresh from St
 
 1. A signed-in lead opens the site (`middleware.js` asks for a username and password first).
 2. The page calls `POST /api/refresh` (`api/refresh.py`, Vercel Python function).
-3. That function runs `sql/enki_ledger_api.sql` against Studio's querier
+3. That function runs `engine/enki_ledger_api.sql` against Studio's querier
    (`POST https://api.studio.mercor.com/querier/unstructured`) with the key from Vercel's settings,
-   then runs `bonus_engine.py` and `build_site.py` on the result and returns fresh tables.
+   then runs `engine/bonus_engine.py` and `engine/build_site.py` on the result and returns fresh tables.
 4. The page draws them. A refresh within 60 s of the last one reuses that result to spare Studio.
 
 The key never reaches the browser, and the SQL is fixed on the server.
@@ -22,14 +22,14 @@ The key never reaches the browser, and the SQL is fixed on the server.
 | `public/index.html` | The dashboard: Bonuses, Pipeline, Ownership, Alerts, and the Refresh button |
 | `middleware.js` | Login in front of every page and the API |
 | `api/refresh.py` | Live pull from Studio + recompute |
-| `vercel.json`, `requirements.txt` | Vercel setup: serve `public/`, run the Python function with pandas |
-| `bonus_config.json` | The week's bonus rules: window, rates, tiers, gates, mid-week rate changes. Edit when a new structure is posted |
-| `bonus_engine.py` | Bonus and alert logic |
-| `build_site.py` | Turns the engine's output into the page's data |
-| `enki_status_map.json` / `.csv`, `enki_flow_transitions.csv` | Every Studio status id (retired ones mapped to current names) and the workflow's actions |
-| `sql/enki_ledger_api.sql` | The query the Refresh button runs |
+| `vercel.json`, `requirements.txt` | Vercel setup: serve `public/`; the Python function bundles only `engine/` plus pandas (Vercel's limit is 225 MB) |
+| `engine/bonus_config.json` | The week's bonus rules: window, rates, tiers, gates, mid-week rate changes. Edit when a new structure is posted |
+| `engine/bonus_engine.py` | Bonus and alert logic |
+| `engine/build_site.py` | Turns the engine's output into the page's data |
+| `engine/enki_status_map.json` / `.csv`, `engine/enki_flow_transitions.csv` | Every Studio status id (retired ones mapped to current names) and the workflow's actions |
+| `engine/enki_ledger_api.sql` | The query the Refresh button runs |
 | `sql/enki_ledger.sql` | The same query for pasting into Studio's Query tab by hand |
-| `merge_delta.py` | Adds newer Studio changes onto an earlier export (manual fallback) |
+| `engine/merge_delta.py` | Adds newer Studio changes onto an earlier export (manual fallback) |
 
 ## Vercel project settings (one time)
 
@@ -47,7 +47,7 @@ Changing a variable needs a redeploy (Deployments → ⋯ → Redeploy).
 
 ## Weekly upkeep
 
-When a new bonus structure is posted, edit `bonus_config.json` (window, amounts, `writer_rate_changes` for a
+When a new bonus structure is posted, edit `engine/bonus_config.json` (window, amounts, `writer_rate_changes` for a
 mid-week change), commit and push. Vercel redeploys; the next refresh uses the new rules.
 
 ## Check after each deploy
@@ -60,11 +60,11 @@ mid-week change), commit and push. Vercel redeploys; the next refresh uses the n
 
 ```
 pip install pandas
-python bonus_engine.py <ledger export.csv>      # results in out/
-python build_site.py <ledger export.csv>        # page data in public/data/
+python engine/bonus_engine.py <ledger export.csv>   # results in engine/out/
+python engine/build_site.py <ledger export.csv>     # page data in public/data/
 python -m http.server -d public 8000            # preview the snapshot at http://localhost:8000
 ```
-`out/`, `data/` and `public/data/` are git-ignored.
+`engine/out/`, any `data/` and `public/data/` are git-ignored.
 
 ## Defaults the engine applies where the rules are silent
 

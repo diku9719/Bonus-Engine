@@ -3,7 +3,8 @@
   "functions": {
     "api/refresh.py": {
       "maxDuration": 60,
-      "includeFiles": "**"
+      "includeFiles": "engine/**",
+      "excludeFiles": "{.vercel,public,sql,.git}/**"
     }
   }
 }
