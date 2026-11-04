@@ -7,7 +7,11 @@ import os
 CFG = json.load(open(os.environ.get("BONUS_CONFIG", os.path.join(os.path.dirname(os.path.abspath(__file__)), "bonus_config.json"))))
 WIN_START = pd.Timestamp(CFG["window"]["start_utc"])
 WIN_END   = pd.Timestamp(CFG["window"]["end_utc"])
+SNAP      = pd.Timestamp(CFG["window"].get("snapshot_utc", CFG["window"]["end_utc"]))   # bonus expiry: T14 rates frozen here
 WCFG, RCFG, SCFG, STG, RULES = CFG["writer"], CFG["reviewer"], CFG["superwriter"], CFG["stages"], CFG["rules"]
+ACFG = CFG.get("auditor", {"audit_stages": ["In audit", "In RFD audit"], "daily_tiers": []})
+BY_SUBMIT = RULES.get("count_tasks_by", "passed_review") == "first_submit"
+DAY_TZ = RULES.get("day_timezone", "America/Los_Angeles")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 smap = {r["status_id"]: r for r in json.load(open(os.path.join(HERE, "enki_status_map.json")))}
@@ -23,6 +27,17 @@ who = lambda email, uid: email if isinstance(email, str) else uid
 L["entered_who"] = [who(a, b) for a, b in zip(L.entered_by, L.entered_by_id)]
 L["exited_who"] = [who(a, b) for a, b in zip(L.exited_by, L.exited_by_id)]
 DATA_THROUGH = L.entered_at.max()
+SNAP_EFF = min(SNAP, DATA_THROUGH)                     # before expiry, rates are "as of now"
+T14_START = SNAP_EFF - pd.Timedelta(days=SCFG["gate"]["defect_rate_window_days"])
+
+# ---- display names (users.first_name/last_name, "[EXP] " stripped); falls back to the email handle
+import re
+NAMES = {}
+for e_col, n_col in (("entered_by", "entered_by_name"), ("exited_by", "exited_by_name"), ("owner", "owner_name"), ("creator", "creator_name")):
+    if e_col in L.columns and n_col in L.columns:
+        for e, n in zip(L[e_col], L[n_col]):
+            if isinstance(e, str) and isinstance(n, str) and n.strip():
+                NAMES[e] = re.sub(r"^\[exp\]\s*", "", n.strip(), flags=re.I)
 
 PASSED = set(STG["passed_review_band"])
 W_SB = set(STG["writer_sendback"])
@@ -83,7 +98,7 @@ for tid, g in L.sort_values(["task_id","seq"]).groupby("task_id", sort=False):
     for _, a in outcomes.iterrows():
         lane, rev, swr = source(a.entered_at)
         audits.append(dict(task_id=tid, reviewer=rev, superwriter=swr, lane=lane,
-            failed=a.nx in FAIL, at=a.exited_at, kind=a.st))
+            failed=a.nx in FAIL, at=a.exited_at, kind=a.st, auditor=a.exited_who))
     # --- sent to audit (reviewer baseline): RFA entries not from the SW lane, credited to most recent reviewer
     for _, e in rfa.iterrows():
         if e.pv in {"Drafting (Superwriter)","Needs Edits (Superwriter)"}: continue
@@ -92,6 +107,12 @@ for tid, g in L.sort_values(["task_id","seq"]).groupby("task_id", sort=False):
 
 T = pd.DataFrame(tasks); TO = pd.DataFrame(touches); A = pd.DataFrame(audits)
 AO = A[A.kind != "sent"].copy(); AS = A[A.kind == "sent"].copy()
+AO["at"] = pd.to_datetime(AO["at"], utc=True)
+AO_SNAP = AO[AO["at"] <= SNAP_EFF]                                    # audits after the bonus expired don't count
+AO_T14 = AO_SNAP[AO_SNAP["at"] >= T14_START]
+def t14(df, key):
+    g = df[df[key].notna()].groupby(key).agg(audited=("failed", "size"), failed=("failed", "sum"))
+    return g
 
 def tier(n, table, key):
     best = 0                                  # highest tier reached, never the sum
@@ -133,7 +154,17 @@ def streak_pairs(seq):
         else: i += 1
     return pairs                                   # index of the task completing each pair
 
-W = T[(T.lane == "writer") & T.credited.notna() & T.passed_review_at.apply(inwin)].copy()
+WL = T[(T.lane == "writer") & T.credited.notna()]
+if BY_SUBMIT:   # counts for the week it was submitted in; pays once it passes review (even after the window)
+    W_SUB = WL[WL.first_submit.apply(inwin)]
+    W = W_SUB[W_SUB.passed_review_at.notna()].copy()
+else:
+    W = WL[WL.passed_review_at.apply(inwin)].copy()
+    W_SUB = WL[WL.first_submit.apply(inwin)]
+W_WAIT = W_SUB[W_SUB.passed_review_at.isna() & (W_SUB.current != "Discarded")]
+# passed review in this window but first submitted before it: under the submission rule they belong to an earlier week
+W_CARRY = WL[WL.passed_review_at.apply(inwin) & (WL.first_submit < WIN_START)] if BY_SUBMIT else WL.iloc[0:0]
+W["after_snapshot"] = W.passed_review_at > SNAP
 W["one_shot"] = W.writer_sendbacks.eq(0); W["two_shot"] = W.writer_sendbacks.eq(1); W["three_shot"] = W.writer_sendbacks.eq(2)
 W["counts_throughput"] = ~W.last_audit_failed
 if not RULES["two_shot_pays_even_if_audit_later_fails"]:
@@ -147,13 +178,19 @@ W = W.sort_values(["credited", "passed_review_at"])
 for p, g in W.groupby("credited"):
     for j in streak_pairs(list(g.one_shot)):
         idx = g.index[j]; W.loc[idx, "streak_usd"] = writer_rates(W.loc[idx, "first_submit"])["streak_usd"]
+wa = T[["task_id", "credited", "lane"]].merge(AO_T14, on="task_id")
+w_t14 = wa[wa.lane_x == "writer"].groupby("credited").agg(audited=("failed", "size"), failed=("failed", "sum"))
 rows = []
-for p, g in W.groupby("credited"):
+for p in sorted(set(W.credited) | set(W_WAIT.credited)):
+    g = W[W.credited == p]
+    a14 = int(w_t14.audited.get(p, 0)); f14 = int(w_t14.failed.get(p, 0))
     tp = int(g.counts_throughput.sum())
     sh = lambda col: int(g[col].sum())
     pay = lambda mask: int((g.task_usd[mask]).sum() + (g.streak_usd[mask]).sum())
     base_name = WCFG.get("structure_name", "base")
-    rows.append(dict(person=p, passed=len(g), one_shots=sh("one_shot"), streaks=int((g.streak_usd > 0).sum()),
+    rows.append(dict(person=p, submitted_in_window=int((W_SUB.credited == p).sum()), waiting_review=int((W_WAIT.credited == p).sum()),
+        paid_after_snapshot=int(g.after_snapshot.sum()), audited_t14=a14, defect_rate_t14=round(f14 / a14, 3) if a14 else None, aht_t14=None,
+        passed=len(g), one_shots=sh("one_shot"), streaks=int((g.streak_usd > 0).sum()),
         two_shots=sh("two_shot"), three_shots=sh("three_shot"), throughput_tasks=tp,
         one_shot_usd=int(g.task_usd[g.one_shot].sum()), streak_usd=int(g.streak_usd.sum()),
         two_shot_usd=int(g.task_usd[g.two_shot].sum()), three_shot_usd=int(g.task_usd[g.three_shot].sum()),
@@ -168,7 +205,11 @@ WTASKS = W[["task_id","task_name","credited","first_submit","passed_review_at","
 TOw = TO[TO["at"].apply(inwin)]
 touch_n = TOw.groupby("reviewer").size()
 sent_n = AS[AS.sent_to_audit_at.apply(inwin)].drop_duplicates(["task_id","reviewer"]).groupby("reviewer").size()
-AOr = AO[AO.reviewer.notna()]
+AOr = AO_SNAP[AO_SNAP.reviewer.notna()]
+r_t14 = t14(AO_T14, "reviewer")
+ASw = AS[AS.sent_to_audit_at.apply(inwin)].copy()
+ASw["audited"] = [bool(len(AO[(AO.task_id == t) & (AO["at"] >= s)])) for t, s in zip(ASw.task_id, ASw.sent_to_audit_at)]
+r_wait = ASw[~ASw.audited].drop_duplicates(["task_id", "reviewer"]).groupby("reviewer").size()
 dr = AOr.groupby("reviewer").agg(audited=("failed","size"), failed=("failed","sum"))
 dr["defect_rate"] = dr.failed / dr.audited
 people = sorted(set(touch_n.index) | set(sent_n.index))
@@ -177,7 +218,9 @@ for p in people:
     t = int(touch_n.get(p, 0)); s = int(sent_n.get(p, 0))
     a = int(dr.audited.get(p, 0)); f = int(dr.failed.get(p, 0)); rate = f / a if a else None
     qualifies = s >= RCFG["gate"]["min_sent_to_audit_in_window"] and rate is not None and rate <= RCFG["gate"]["all_time_defect_rate_max"]
-    rows.append(dict(person=p, touches=t, sent_to_audit=s, audited_all_time=a, failed_all_time=f,
+    a14 = int(r_t14.audited.get(p, 0)); f14 = int(r_t14.failed.get(p, 0))
+    rows.append(dict(person=p, touches=t, sent_to_audit=s, waiting_audit=int(r_wait.get(p, 0)), audited_t14=a14,
+        defect_rate_t14=round(f14 / a14, 3) if a14 else None, audited_all_time=a, failed_all_time=f,
         defect_rate=None if rate is None else round(rate, 3), qualifies=qualifies,
         touch_usd=tier(t, RCFG["touch_tiers"], "min_touches") if qualifies else 0,
         defect_usd=rate_bonus(rate, RCFG["defect_rate_tiers"]) if qualifies else 0,
@@ -187,20 +230,21 @@ if len(RV): RV["total_usd"] = RV.touch_usd + RV.defect_usd
 
 # ---------------- SUPERWRITERS ----------------
 S = T[T.lane == "superwriter"].copy()
-AO["at"] = pd.to_datetime(AO["at"], utc=True)
-T14_START = min(DATA_THROUGH, WIN_END) - pd.Timedelta(days=SCFG["gate"]["defect_rate_window_days"])
-swa = AO[(AO.lane == "superwriter") & AO.superwriter.notna()]
+swa = AO_SNAP[(AO_SNAP.lane == "superwriter") & AO_SNAP.superwriter.notna()]
 sw_out = swa.groupby("superwriter").agg(audited=("failed","size"), failed=("failed","sum"))
 sw_t14 = swa[swa["at"] >= T14_START].groupby("superwriter").agg(audited=("failed","size"), failed=("failed","sum"))
+S_SUB = S[S.sw_first_submit.apply(inwin)]
+S_WAIT = S_SUB[S_SUB.rfd_at.isna() & (S_SUB.current != "Discarded")]
 rows = []
 for p, g in S.groupby("superwriter"):
     sub = g[g.sw_first_submit.apply(inwin)]
-    done = g[g.rfd_at.apply(inwin)].sort_values("rfd_at")
+    done = (g[g.sw_first_submit.apply(inwin) & g.rfd_at.notna()] if BY_SUBMIT else g[g.rfd_at.apply(inwin)]).sort_values("rfd_at")
     streaks = count_streaks(list(done.sw_sendbacks.eq(0)))
     one = int(done.sw_sendbacks.eq(0).sum())
     a = int(sw_out.audited.get(p, 0)); f = int(sw_out.failed.get(p, 0)); rate = f / a if a else None
     a14 = int(sw_t14.audited.get(p, 0)); f14 = int(sw_t14.failed.get(p, 0)); r14 = f14 / a14 if a14 else None
-    rows.append(dict(person=p, submitted_to_audit=len(sub), delivered=len(done), one_shots=one, streaks=streaks,
+    rows.append(dict(person=p, submitted_to_audit=len(sub), waiting=int((S_WAIT.superwriter == p).sum()), aht_t14=None,
+        delivered=len(done), one_shots=one, streaks=streaks,
         audited_t14=a14, failed_t14=f14, defect_rate_t14=None if r14 is None else round(r14, 3),
         audited_all_time=a, failed_all_time=f, defect_rate_all_time=None if rate is None else round(rate, 3),
         defect_ok=(r14 is None or r14 < SCFG["gate"]["defect_rate_below"]), one_shot_usd=SCFG["one_shot_usd"]*one, streak_usd=SCFG["streak_usd"]*streaks,
@@ -247,8 +291,34 @@ mv = mv[["task_id","task_name","pv","st","entered_who","entered_at"]]
 off = mv[[(a, b) not in allowed for a, b in zip(mv.pv, mv.st)]]
 OFF = off.groupby(["pv","st"]).agg(moves=("task_id","size"), people=("entered_who","nunique"), last=("entered_at","max")).reset_index().sort_values("moves", ascending=False)
 
+# ---------------- AUDITORS (daily, Pacific-time days) ----------------
+AU = AO[AO.kind.isin(ACFG["audit_stages"]) & AO["at"].apply(inwin) & AO.auditor.notna()].copy()
+AU["day"] = AU["at"].dt.tz_convert(DAY_TZ).dt.strftime("%Y-%m-%d")
+AUD = AU.groupby(["auditor", "day"]).agg(audits=("task_id", "size"), failed=("failed", "sum")).reset_index()
+AUD["usd"] = [tier(n, ACFG["daily_tiers"], "min_audits") for n in AUD.audits]
+tiers_sorted = sorted(ACFG["daily_tiers"], key=lambda t: t["min_audits"])
+rows = []
+for p, g in AUD.groupby("auditor"):
+    r = dict(person=p, audits=int(g.audits.sum()), failed=int(g.failed.sum()), active_days=len(g), best_day=int(g.audits.max()),
+             by_day="; ".join(f"{d[5:]}: {n}" for d, n in zip(g.day, g.audits)), total_usd=int(g.usd.sum()))
+    for t in tiers_sorted: r[f"days_{t['min_audits']}_plus"] = int((g.audits >= t["min_audits"]).sum())
+    rows.append(r)
+AUR = pd.DataFrame(rows)
+
+# ---------------- WAITING: submitted in the window, not resolved yet ----------------
+cur_st = dict(zip(T.task_id, T.current))
+wait_rows = [dict(role="writer", person=r.credited, task_id=r.task_id, task_name=r.task_name, submitted_at=r.first_submit,
+                  now=r.current, waiting_for="review") for r in W_WAIT.itertuples()]
+wait_rows += [dict(role="superwriter", person=r.superwriter, task_id=r.task_id, task_name=r.task_name, submitted_at=r.sw_first_submit,
+                   now=r.current, waiting_for="audit / delivery") for r in S_WAIT.itertuples()]
+wait_rows += [dict(role="reviewer", person=r.reviewer, task_id=r.task_id, task_name=T.set_index("task_id").task_name.get(r.task_id),
+                   submitted_at=r.sent_to_audit_at, now=cur_st.get(r.task_id), waiting_for="audit result")
+              for r in ASw[~ASw.audited].drop_duplicates(["task_id", "reviewer"]).itertuples()]
+WAIT = pd.DataFrame(wait_rows, columns=["role","person","task_id","task_name","submitted_at","now","waiting_for"])
+if len(WAIT): WAIT["days_waiting"] = ((DATA_THROUGH - pd.to_datetime(WAIT.submitted_at, utc=True)).dt.total_seconds() / 86400).round(1)
+
 is_expert = lambda p: isinstance(p, str) and p.endswith(RULES["payout_email_domain"])
-for df in (WR, RV, SWR):
+for df in (WR, RV, SWR, AUR):
     if len(df): df.insert(1, "expert", df.person.map(is_expert))
 # self-routing: same person moves own task Drafting -> Ready for writing -> Drafting (Superwriter) (skips review)
 selfroute = []
@@ -261,8 +331,17 @@ for tid, g in L.sort_values(["task_id","seq"]).groupby("task_id"):
                 minutes=round((c.entered_at - b.entered_at).total_seconds() / 60, 1)))
 SR = pd.DataFrame(selfroute)
 out = os.environ.get("BONUS_OUT", os.path.join(HERE, "out")); os.makedirs(out, exist_ok=True)
+AUR.to_csv(f"{out}/bonus_auditors.csv", index=False); AUD.to_csv(f"{out}/auditor_daily.csv", index=False)
+if len(WAIT): WAIT.insert(1, "expert", WAIT.person.map(is_expert))
+WAIT.to_csv(f"{out}/waiting.csv", index=False)
+W_CARRY.assign(expert=W_CARRY.credited.map(is_expert))[["task_id","task_name","credited","expert","first_submit","passed_review_at","writer_sendbacks"]].to_csv(f"{out}/carried_in.csv", index=False)
+pd.DataFrame(sorted(NAMES.items()), columns=["email", "name"]).to_csv(f"{out}/people.csv", index=False)
+json.dump({"snapshot_utc": str(SNAP), "snapshot_effective_utc": str(SNAP_EFF), "t14_start_utc": str(T14_START),
+           "count_tasks_by": "first_submit" if BY_SUBMIT else "passed_review", "data_through": str(DATA_THROUGH)},
+          open(f"{out}/run_meta.json", "w"))
 T.to_csv(f"{out}/tasks_derived.csv", index=False); TO.to_csv(f"{out}/review_touches.csv", index=False); AO.to_csv(f"{out}/audit_outcomes.csv", index=False)
 WR.to_csv(f"{out}/bonus_writers.csv", index=False); WTASKS.to_csv(f"{out}/bonus_writer_tasks.csv", index=False); RV.to_csv(f"{out}/bonus_reviewers.csv", index=False); SWR.to_csv(f"{out}/bonus_superwriters.csv", index=False)
 alerts_3rd.to_csv(f"{out}/alert_3plus_needs_edits.csv", index=False); stuck.to_csv(f"{out}/alert_stuck.csv", index=False); SR.to_csv(f"{out}/alert_self_routed_to_sw.csv", index=False); idle.to_csv(f"{out}/alert_claimed_idle.csv", index=False); NWO.to_csv(f"{out}/alert_new_work_with_open_edits.csv", index=False); OFF.to_csv(f"{out}/alert_off_flow_moves.csv", index=False)
 print("config:", CFG["week_label"], "| data through", DATA_THROUGH, "| unknown statuses:", unknown)
-print("tasks", len(T), "| writer-lane passed in window", len(W), "| touches in window", len(TOw), "| audit outcomes all-time", len(AO))
+print("snapshot", SNAP_EFF, "| T14 from", T14_START, "| by", "first_submit" if BY_SUBMIT else "passed_review", "| waiting", len(WAIT), "| auditors", len(AUR))
+print("tasks", len(T), "| writer tasks counted", len(W), "| touches in window", len(TOw), "| audit outcomes all-time", len(AO))

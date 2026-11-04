@@ -22,7 +22,7 @@ ENGINE = os.path.join(ROOT, "engine")   # bonus_engine.py, build_site.py, settin
 SQL_FILE = os.path.join(ENGINE, "enki_ledger_api.sql")
 REUSE_S = 60                          # a refresh within 60 s of the last one (same server) reuses that result
 _last = {"t": 0.0, "data": None}
-NAMES = ["meta", "writers", "reviewers", "superwriters", "pipeline", "alerts", "ledger"]
+NAMES = ["meta", "writers", "reviewers", "superwriters", "auditors", "waiting", "pipeline", "alerts", "ledger"]
 
 
 def studio_query(sql):

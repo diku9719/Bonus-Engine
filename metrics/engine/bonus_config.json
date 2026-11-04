@@ -1,5 +1,5 @@
 {
-  "_readme": "Weekly Enki bonus settings. Edit this file when Sara posts a new structure; no code change needed. Times are UTC (PT 9:00 AM PDT = 16:00Z; 12:00 PM PST = 20:00Z). Tiers pay the HIGHEST level reached, never the sum. Rates are fractions (0.30 = 30%).",
+  "_readme": "Weekly Enki bonus settings. Edit this file when a new structure is posted; no code change needed. Times are UTC (midnight PST = 08:00Z; midnight PDT = 07:00Z). Tiers pay the HIGHEST level reached, never the sum. Rates are fractions (0.30 = 30%).",
   "week_label": "Oct 26 - Nov 2, 2026",
   "source_posts": [
     "Sara M. #enki-announcements 2026-10-26",
@@ -9,7 +9,9 @@
   ],
   "window": {
     "start_utc": "2026-10-26T16:00:00Z",
-    "end_utc": "2026-11-02T20:00:00Z"
+    "end_utc": "2026-11-02T20:00:00Z",
+    "snapshot_utc": "2026-11-02T20:00:00Z",
+    "_note": "snapshot_utc = when the bonus expires; T14 defect rates are frozen there and audits after it are ignored. Tasks submitted inside the window but resolved later are paid once resolved (they show as 'waiting' until then)."
   },
   "writer": {
     "gate": {
@@ -141,7 +143,10 @@
     "rerun_loop_is_not_a_touch": true,
     "payout_email_domain": "@mercor.expert",
     "alert_needs_edits_rounds": 3,
-    "alert_idle_days": 3
+    "alert_idle_days": 3,
+    "count_tasks_by": "first_submit",
+    "_count_tasks_by_note": "first_submit: a task counts for the week it was first submitted in, and pays once it passes review (Zayn, Nov 4). passed_review: the older rule, counts by when it passed review.",
+    "day_timezone": "America/Los_Angeles"
   },
   "writer_rate_changes": [
     {
@@ -153,5 +158,26 @@
       "two_shot_usd": 100,
       "three_shot_usd": 50
     }
-  ]
+  ],
+  "auditor": {
+    "_note": "Daily auditor bonus, counted per Pacific-time day (Ekansh/Manav call, Nov 4). Fill the dollar amounts from this week's post.",
+    "audit_stages": [
+      "In audit",
+      "In RFD audit"
+    ],
+    "daily_tiers": [
+      {
+        "min_audits": 3,
+        "usd": 0
+      },
+      {
+        "min_audits": 6,
+        "usd": 0
+      }
+    ]
+  },
+  "aht": {
+    "available": false,
+    "_note": "Studio does not record working hours, so AHT is not computed. Put true here only once an hours source is wired in."
+  }
 }

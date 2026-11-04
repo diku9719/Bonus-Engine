@@ -43,7 +43,9 @@
   th { position: sticky; top: 0; background: var(--panel); text-align: left; font-weight: 600; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
   td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
   .n { text-align: right; }
-  .who { font-family: var(--mono); font-size: .8rem; white-space: nowrap; }
+  .who { white-space: nowrap; }
+  .who small { display: block; font-family: var(--mono); font-size: .72rem; color: var(--muted); }
+  .wait { color: var(--warn); font-weight: 600; }
   .pill { display: inline-block; padding: 0 6px; border-radius: 6px; font-size: .78rem; border: 1px solid currentColor; white-space: nowrap; }
   .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
   .paid { font-weight: 650; }
@@ -87,31 +89,49 @@
 
   <nav class="tabs" role="tablist" aria-label="Views">
     <button role="tab" data-tab="bonuses" aria-selected="true">Bonuses</button>
+    <button role="tab" data-tab="waiting" aria-selected="false">Waiting</button>
     <button role="tab" data-tab="pipeline" aria-selected="false">Pipeline</button>
     <button role="tab" data-tab="ownership" aria-selected="false">Ownership</button>
     <button role="tab" data-tab="alerts" aria-selected="false">Alerts</button>
   </nav>
 
   <section id="v-bonuses">
+    <p class="note" id="snap-note"></p>
     <div class="tiles">
       <div class="tile"><h3>Writers</h3><span class="big" id="t-writers">—</span><p id="t-writers-n"></p></div>
       <div class="tile"><h3>Superwriters</h3><span class="big" id="t-super">—</span><p id="t-super-n"></p></div>
       <div class="tile"><h3>Reviewers</h3><span class="big" id="t-rev">—</span><p id="t-rev-n"></p></div>
+      <div class="tile"><h3>Auditors</h3><span class="big" id="t-aud">—</span><p id="t-aud-n"></p></div>
+      <div class="tile"><h3>Waiting to resolve</h3><span class="big" id="t-wait">—</span><p id="t-wait-n"></p></div>
     </div>
     <div class="card">
       <h2>Writers</h2>
-      <p class="note">Rates follow when the writer first submitted the task. Submitted before the Halloween announcement: one-shot $150, streak +$150, two-shot $100. Submitted after it (Halloween Bonus Special): one-shot $250, streak +$250, two-shot $100, three-shot $50. Throughput 2 → $200 or 3 → $350 for all (highest tier only). AHT gate (under 22 h) not applied yet. <span id="w-change"></span></p>
-      <div class="scroll"><table><thead><tr><th>Writer</th><th class="n">Passed</th><th class="n">One-shots</th><th class="n">Streaks</th><th class="n">Two-shots</th><th class="n">Three-shots</th><th class="n">Throughput</th><th class="n">Old rates</th><th class="n">Halloween rates</th><th class="n">Total</th></tr></thead><tbody id="b-writers"></tbody></table></div>
+      <p class="note" id="n-writers"></p>
+      <div class="scroll"><table><thead><tr><th>Writer</th><th class="n">Submitted</th><th class="n">Waiting</th><th class="n">Passed</th><th class="n">One-shots</th><th class="n">Streaks</th><th class="n">Two-shots</th><th class="n">Three-shots</th><th class="n">Throughput</th><th class="n">Defect T14</th><th class="n" id="h-base">Base rates</th><th class="n" id="h-new">New rates</th><th class="n">Total</th></tr></thead><tbody id="b-writers"></tbody></table></div>
     </div>
     <div class="card">
       <h2>Superwriters</h2>
-      <p class="note">One-shot $200, +$150 per streak pair, throughput 2 / 4 / 6 submitted to audit → $200 / $500 / $800. Pays only if the 14-day audit defect rate is under 20%; AHT gate (under 16 h) not applied yet.</p>
-      <div class="scroll"><table><thead><tr><th>Superwriter</th><th class="n">Submitted</th><th class="n">Delivered</th><th class="n">One-shots</th><th class="n">Defect (14 d)</th><th>Gate</th><th class="n">Total</th></tr></thead><tbody id="b-super"></tbody></table></div>
+      <p class="note" id="n-super"></p>
+      <div class="scroll"><table><thead><tr><th>Superwriter</th><th class="n">Submitted</th><th class="n">Waiting</th><th class="n">Delivered</th><th class="n">One-shots</th><th class="n">Defect T14</th><th>Gate</th><th class="n">Total</th></tr></thead><tbody id="b-super"></tbody></table></div>
     </div>
     <div class="card">
       <h2>Reviewers</h2>
-      <p class="note">Gate: 2+ reviewed tasks sent to audit this week and all-time defect rate 30% or less. Touches 6 / 9 / 12 → $100 / $200 / $300; defect 15% or less → $50, 10% or less → $100.</p>
-      <div class="scroll"><table><thead><tr><th>Reviewer</th><th class="n">Touches</th><th class="n">Sent to audit</th><th class="n">Defect (all-time)</th><th>Gate</th><th class="n">Total</th></tr></thead><tbody id="b-rev"></tbody></table></div>
+      <p class="note" id="n-rev"></p>
+      <div class="scroll"><table><thead><tr><th>Reviewer</th><th class="n">Touches</th><th class="n">Sent to audit</th><th class="n">Waiting audit</th><th class="n">Defect all-time</th><th class="n">Defect T14</th><th>Gate</th><th class="n">Total</th></tr></thead><tbody id="b-rev"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h2>Auditors (per Pacific-time day)</h2>
+      <p class="note" id="n-aud"></p>
+      <div class="scroll"><table><thead id="h-aud"></thead><tbody id="b-aud"></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="v-waiting" hidden>
+    <div class="card">
+      <h2>Submitted this week, not resolved yet</h2>
+      <p class="note">These are not in the totals yet. Writer tasks pay once they pass review; superwriter one-shots once delivered; reviewer defect rates move once the audit result lands.</p>
+      <div class="controls"><label for="wrole">Show</label><select id="wrole"><option value="">Everyone</option><option value="writer">Writers</option><option value="superwriter">Superwriters</option><option value="reviewer">Reviewers</option></select></div>
+      <div class="scroll"><table><thead><tr><th>Role</th><th>Person</th><th>Task</th><th>Submitted (PT)</th><th>Now in</th><th>Waiting for</th><th class="n">Days</th></tr></thead><tbody id="b-wait"></tbody></table></div>
     </div>
   </section>
 
@@ -130,7 +150,7 @@
       <div class="controls"><label for="task">Task</label><select id="task"></select></div>
       <div class="legend" id="legend"></div>
       <div class="tl" id="timeline"></div>
-      <div class="scroll"><table><thead><tr><th>#</th><th>Status</th><th>Entered (UTC)</th><th>Moved by</th><th>Owner</th><th class="n">Hours</th></tr></thead><tbody id="b-ledger"></tbody></table></div>
+      <div class="scroll"><table><thead><tr><th>#</th><th>Status</th><th>Entered (PT)</th><th>Moved by</th><th>Owner</th><th class="n">Hours</th></tr></thead><tbody id="b-ledger"></tbody></table></div>
     </div>
   </section>
 
@@ -152,18 +172,22 @@
   const num = (v) => (v == null ? '—' : Number(v).toLocaleString('en-US'));
   const td = (text, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = text; return c; };
   const pill = (text, tone) => { const c = document.createElement('td'); const s = document.createElement('span'); s.className = 'pill ' + tone; s.textContent = text; c.append(s); return c; };
-  const NAMES = ['meta', 'writers', 'reviewers', 'superwriters', 'pipeline', 'alerts', 'ledger'];
+  const NAMES = ['meta', 'writers', 'reviewers', 'superwriters', 'auditors', 'waiting', 'pipeline', 'alerts', 'ledger'];
+  const OPTIONAL = ['auditors', 'waiting'];
+  const who = (r) => { const c = document.createElement('td'); c.className = 'who'; c.append(r.person || '—'); if (r.handle && r.handle !== r.person) { const s = document.createElement('small'); s.textContent = r.handle; c.append(s); } return c; };
+  const waitTd = (v) => td(num(v), 'n' + (v > 0 ? ' wait' : ''));
   let D = null, missing = [], tasks = [], end = 0;
 
   // tabs (wired once)
   const tabs = document.querySelectorAll('[data-tab]');
-  const show = (t) => { tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t))); ['bonuses', 'pipeline', 'ownership', 'alerts'].forEach((s) => { $('v-' + s).hidden = s !== t; }); window.scrollTo(0, 0); };
+  const show = (t) => { tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t))); ['bonuses', 'waiting', 'pipeline', 'ownership', 'alerts'].forEach((s) => { $('v-' + s).hidden = s !== t; }); window.scrollTo(0, 0); };
   tabs.forEach((b) => b.addEventListener('click', () => { show(b.dataset.tab); history.replaceState(null, '', '#' + b.dataset.tab); }));
   if (location.hash) show(location.hash.slice(1));
 
   // ownership + alerts drawers read the current D
   const palette = ['#2f6f5e', '#b5651d', '#4565a8', '#8a4f9e', '#a8862b', '#2b8a99', '#b0465c', '#5f7d2e'];
-  const fmt = (s) => new Date(s).toISOString().slice(0, 16).replace('T', ' ');
+  const ptFmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const fmt = (s) => ptFmt.format(new Date(s));
   const drawTask = (id) => {
     const t = tasks.find((x) => x.id === id) || tasks[0];
     $('legend').replaceChildren(); $('timeline').replaceChildren(); $('b-ledger').replaceChildren();
@@ -190,6 +214,11 @@
     const k = $('kind').value; $('b-alerts').replaceChildren();
     D.alerts.filter((a) => !k || a.kind === k).forEach((a) => { const tr = document.createElement('tr'); tr.append(td(a.kind), td(a.task), td(a.person || '—', 'who'), td(a.detail)); $('b-alerts').append(tr); });
   };
+  const drawWaiting = () => {
+    const k = $('wrole').value; $('b-wait').replaceChildren();
+    (D.waiting || []).filter((w) => !k || w.role === k).forEach((w) => { const tr = document.createElement('tr'); tr.append(td(w.role), who(w), td(w.task_name), td(w.submitted_pt), td(w.now || '—'), td(w.waiting_for), td(num(w.days_waiting), 'n')); $('b-wait').append(tr); });
+  };
+  $('wrole').addEventListener('change', drawWaiting);
   $('task').addEventListener('change', (e) => drawTask(e.target.value));
   $('kind').addEventListener('change', drawAlerts);
 
@@ -197,19 +226,33 @@
   const render = () => {
     const sum = (rows) => rows.reduce((s, r) => s + Number(r.total_usd || 0), 0);
     const earning = (rows) => rows.filter((r) => Number(r.total_usd) > 0).length;
-    const total = sum(D.writers) + sum(D.superwriters) + sum(D.reviewers);
+    const M = D.meta || {}, N = M.notes || {};
+    D.auditors = D.auditors || []; D.waiting = D.waiting || [];
+    const total = sum(D.writers) + sum(D.superwriters) + sum(D.reviewers) + sum(D.auditors);
     const open = D.pipeline.reduce((s, r) => s + r.open_tasks, 0);
-    $('summary').replaceChildren(`Week of ${D.meta.week || '—'}, data through ${D.meta.data_through || '—'}: `, Object.assign(document.createElement('b'), { textContent: usd(total) }),
-      ' in draft bonuses before the AHT gate and roster check; ', Object.assign(document.createElement('b'), { textContent: num(open) }),
-      ' tasks unfinished; ', Object.assign(document.createElement('b'), { textContent: num(D.alerts.length) }), ' alerts.');
+    $('summary').replaceChildren(`Week of ${M.week || '—'}, data through ${M.data_through_pt || M.data_through || '—'}: `, Object.assign(document.createElement('b'), { textContent: usd(total) }),
+      ' in bonuses so far (before the AHT gate); ', Object.assign(document.createElement('b'), { textContent: num(D.waiting.length) }),
+      ' submitted tasks still waiting; ', Object.assign(document.createElement('b'), { textContent: num(open) }), ' tasks unfinished overall.');
     if (missing.length && missing.length < NAMES.length) { const w = document.createElement('span'); w.className = 'err'; w.textContent = ` Missing from this snapshot: ${missing.join(', ')}. Press Refresh.`; $('summary').append(w); }
-    [['writers', 't-writers'], ['superwriters', 't-super'], ['reviewers', 't-rev']].forEach(([k, id]) => { $(id).textContent = usd(sum(D[k])); $(id + '-n').textContent = `${earning(D[k])} of ${D[k].length} earning`; });
+    $('snap-note').textContent = M.window_pt ? `Window ${M.window_pt}. Defect rates are T14 as of the bonus expiry, ${M.snapshot_pt}` + (M.snapshot_passed ? ' (frozen: later audits are ignored).' : ` (not reached yet, so they show T14 up to now, from ${M.t14_from_pt}).`) + ' AHT is not shown: Studio has no hours data.' : '';
+    [['writers', 't-writers'], ['superwriters', 't-super'], ['reviewers', 't-rev'], ['auditors', 't-aud']].forEach(([k, id]) => { $(id).textContent = usd(sum(D[k])); $(id + '-n').textContent = `${earning(D[k])} of ${D[k].length} earning`; });
+    $('t-wait').textContent = num(D.waiting.length);
+    const byRole = (r) => D.waiting.filter((w) => w.role === r).length;
+    $('t-wait-n').textContent = `${byRole('writer')} writer, ${byRole('superwriter')} superwriter, ${byRole('reviewer')} reviewer`;
+    $('n-writers').textContent = N.writers || ''; $('n-super').textContent = N.superwriters || ''; $('n-rev').textContent = N.reviewers || ''; $('n-aud').textContent = N.auditors || '';
+    $('h-base').textContent = M.base_label || 'Base rates'; $('h-new').textContent = M.new_label || 'New rates'; $('h-new').hidden = !M.new_label;
 
-    ['b-writers', 'b-super', 'b-rev', 'pipe', 'alert-tiles'].forEach((id) => $(id).replaceChildren());
-    D.writers.forEach((r) => { const tr = document.createElement('tr'); tr.append(td(r.person, 'who'), td(num(r.passed), 'n'), td(num(r.one_shots), 'n'), td(num(r.streaks), 'n'), td(num(r.two_shots), 'n'), td(num(r.three_shots), 'n'), td(num(r.throughput_tasks), 'n'), td(usd(r.usd_base_rules), 'n'), td(usd(r.usd_new_rules), 'n'), td(usd(r.total_usd), 'n' + (r.total_usd > 0 ? ' paid' : ''))); $('b-writers').append(tr); });
-    $('w-change').textContent = D.meta.writer_change ? `Cutoff used: ${D.meta.writer_change}.` : '';
-    D.superwriters.forEach((r) => { const tr = document.createElement('tr'); tr.append(td(r.person, 'who'), td(num(r.submitted_to_audit), 'n'), td(num(r.delivered), 'n'), td(num(r.one_shots), 'n'), td(pct(r.defect_rate_t14), 'n'), r.defect_ok ? pill('Under 20%', 'ok') : pill('20% or more', 'bad'), td(usd(r.total_usd), 'n' + (r.total_usd > 0 ? ' paid' : ''))); $('b-super').append(tr); });
-    D.reviewers.forEach((r) => { const tr = document.createElement('tr'); tr.append(td(r.person, 'who'), td(num(r.touches), 'n'), td(num(r.sent_to_audit), 'n'), td(pct(r.defect_rate), 'n'), r.qualifies ? pill('Qualifies', 'ok') : pill(r.why_not, 'warn'), td(usd(r.total_usd), 'n' + (r.total_usd > 0 ? ' paid' : ''))); $('b-rev').append(tr); });
+    ['b-writers', 'b-super', 'b-rev', 'b-aud', 'h-aud', 'pipe', 'alert-tiles'].forEach((id) => $(id).replaceChildren());
+    const paid = (v) => td(usd(v), 'n' + (v > 0 ? ' paid' : ''));
+    D.writers.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), td(num(r.submitted_in_window), 'n'), waitTd(r.waiting_review), td(num(r.passed), 'n'), td(num(r.one_shots), 'n'), td(num(r.streaks), 'n'), td(num(r.two_shots), 'n'), td(num(r.three_shots), 'n'), td(num(r.throughput_tasks), 'n'), td(pct(r.defect_rate_t14), 'n'), td(usd(r.usd_base_rules), 'n')); if (M.new_label) tr.append(td(usd(r.usd_new_rules), 'n')); tr.append(paid(r.total_usd)); $('b-writers').append(tr); });
+    D.superwriters.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), td(num(r.submitted_to_audit), 'n'), waitTd(r.waiting), td(num(r.delivered), 'n'), td(num(r.one_shots), 'n'), td(pct(r.defect_rate_t14), 'n'), r.defect_ok ? pill('Under 20%', 'ok') : pill('20% or more', 'bad'), paid(r.total_usd)); $('b-super').append(tr); });
+    D.reviewers.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), td(num(r.touches), 'n'), td(num(r.sent_to_audit), 'n'), waitTd(r.waiting_audit), td(pct(r.defect_rate), 'n'), td(pct(r.defect_rate_t14), 'n'), r.qualifies ? pill('Qualifies', 'ok') : pill(r.why_not, 'warn'), paid(r.total_usd)); $('b-rev').append(tr); });
+    const at = M.auditor_tiers || [];
+    const hr = document.createElement('tr');
+    ['Auditor', 'Audits', 'Failed', 'Active days', ...at.map((t) => `Days ${t.min_audits}+`), 'Best day', 'Per day (PT)', 'Total'].forEach((h, i) => { const th = document.createElement('th'); th.textContent = h; if (i && h !== 'Per day (PT)') th.className = 'n'; hr.append(th); });
+    $('h-aud').append(hr);
+    D.auditors.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), td(num(r.audits), 'n'), td(num(r.failed), 'n'), td(num(r.active_days), 'n'), ...at.map((t) => td(num(r[`days_${t.min_audits}_plus`]), 'n')), td(num(r.best_day), 'n'), td(r.by_day), paid(r.total_usd)); $('b-aud').append(tr); });
+    drawWaiting();
 
     const maxOpen = Math.max(1, ...D.pipeline.map((r) => r.open_tasks));
     D.pipeline.forEach((r) => {
@@ -261,9 +304,9 @@
       const r = await fetch('api/refresh', { method: 'POST', cache: 'no-store', headers: { 'Content-Type': 'application/json' }, body: '{}' });
       let body = {}; try { body = await r.json(); } catch (e) { body = {}; }
       if (!r.ok) throw new Error(body.error || `Refresh failed (${r.status})`);
-      if (!NAMES.every((n) => n in body)) throw new Error('Refresh returned incomplete data');
+      if (!NAMES.filter((n) => !OPTIONAL.includes(n)).every((n) => n in body)) throw new Error('Refresh returned incomplete data');
       D = body; missing = []; render();
-      st.textContent = `Live from Studio: data through ${D.meta.data_through}, refreshed ${D.meta.refreshed_at} (${D.meta.refresh_seconds} s).`;
+      st.textContent = `Live from Studio: data through ${D.meta.data_through_pt || D.meta.data_through}, refreshed ${D.meta.refreshed_at} (${D.meta.refresh_seconds} s).`;
     } catch (e) {
       st.classList.add('err'); st.textContent = D.meta && D.meta.data_through ? `${e.message}. Still showing the previous data.` : `${e.message}.`;
       if (!(D.meta && D.meta.data_through)) $('summary').textContent = 'Could not load live data from Studio. See the message under the button, then press Refresh to try again.';

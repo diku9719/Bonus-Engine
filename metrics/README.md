@@ -67,6 +67,24 @@ python -m http.server -d public 8000            # preview the snapshot at http:/
 ```
 `engine/out/`, any `data/` and `public/data/` are git-ignored.
 
+## What the tables show (Nov 4 changes)
+
+- **Names:** experts show as their Studio name ("[EXP] " removed) with the email handle underneath.
+- **Counting rule** (`rules.count_tasks_by`): `first_submit` means a task counts for the week it was first submitted in, and pays once it passes review, even after the window. Set it to `passed_review` to switch back to the old rule.
+- **Waiting tab:** tasks submitted in the window that aren't resolved yet:
+  - writers: not yet passed review
+  - superwriters: not yet delivered
+  - reviewers: sent to audit with no result yet
+
+  These are not in the totals until they resolve.
+- **Snapshot** (`window.snapshot_utc`): the bonus expiry time.
+  - T14 defect rates are computed for the 14 days up to this time.
+  - Audits after it are ignored.
+  - Before it, the rates run up to now.
+- **Auditors:** audits finished per Pacific-time day (`rules.day_timezone`), paid by `auditor.daily_tiers`.
+- **Alert "Passed this week, submitted earlier":** under the submission rule, these tasks belong to an earlier week's window.
+- **AHT:** not shown. Studio has no hours data (`aht.available: false`).
+
 ## Defaults the engine applies where the rules are silent
 
 - Tiers pay the highest level reached, never the sum.
