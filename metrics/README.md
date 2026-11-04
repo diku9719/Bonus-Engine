@@ -23,7 +23,7 @@ The key never reaches the browser, and the SQL is fixed on the server.
 | `middleware.js` | Login in front of every page and the API |
 | `api/refresh.py` | Live pull from Studio + recompute |
 | `vercel.json`, `requirements.txt` | Vercel setup: serve `public/`; the Python function bundles only `engine/` plus pandas (Vercel's limit is 225 MB) |
-| `engine/bonus_config.json` | The week's bonus rules: window, rates, tiers, gates, mid-week rate changes. Edit when a new structure is posted |
+| `engine/weeks/<start date>.json` | One file per bonus week: window, expiry, rates, tiers, gates. The dashboard's week picker shows every file |
 | `engine/bonus_engine.py` | Bonus and alert logic |
 | `engine/build_site.py` | Turns the engine's output into the page's data |
 | `engine/enki_status_map.json` / `.csv`, `engine/enki_flow_transitions.csv` | Every Studio status id (retired ones mapped to current names) and the workflow's actions |
@@ -48,8 +48,14 @@ Changing a variable needs a redeploy (Deployments → ⋯ → Redeploy).
 
 ## Weekly upkeep
 
-When a new bonus structure is posted, edit `engine/bonus_config.json` (window, amounts, `writer_rate_changes` for a
-mid-week change), commit and push. Vercel redeploys; the next refresh uses the new rules.
+When a new bonus structure is posted, copy the latest file in `engine/weeks/`, name it after the new start date
+(e.g. `2026-11-09.json`), change the window and amounts, then commit and push. Vercel redeploys, and the next refresh
+shows the new week in the picker (newest first by default). Older weeks keep their own rules.
+
+Writer settings: `per_task_usd` (flat pay per task), `one_shot_usd` (one-shot pay, or the boost on top of the per-task pay),
+`two_shot_usd`, `three_shot_usd`, `streak_usd`, `pay_after` (`review` or `audit`), `no_audit_fail` (a failed audit voids the task).
+Reviewer: `defect_rate_window` `t14` or `all_time`. Superwriter: `enabled: false` when there's no superwriter bonus.
+Auditor: `daily_tiers` per Pacific-time day, highest tier only.
 
 ## Check after each deploy
 
@@ -61,7 +67,7 @@ mid-week change), commit and push. Vercel redeploys; the next refresh uses the n
 
 ```
 pip install pandas
-python engine/bonus_engine.py <ledger export.csv>   # results in engine/out/
+BONUS_CONFIG=engine/weeks/2026-11-03.json python engine/bonus_engine.py <ledger export.csv>   # results in engine/out/ (default: latest week)
 python engine/build_site.py <ledger export.csv>     # page data in public/data/
 python -m http.server -d public 8000            # preview the snapshot at http://localhost:8000
 ```
@@ -70,7 +76,7 @@ python -m http.server -d public 8000            # preview the snapshot at http:/
 ## What the tables show (Nov 4 changes)
 
 - **Names:** experts show as their Studio name ("[EXP] " removed) with the email handle underneath.
-- **Counting rule** (`rules.count_tasks_by`): `first_submit` means a task counts for the week it was first submitted in, and pays once it passes review, even after the window. Set it to `passed_review` to switch back to the old rule.
+- **Counting rule** (`rules.count_tasks_by` in each week file): `first_submit` means a task counts for the week it was first submitted in, and pays once it passes review, even after the window. Set it to `passed_review` to switch back to the old rule.
 - **Waiting tab:** tasks submitted in the window that aren't resolved yet:
   - writers: not yet passed review
   - superwriters: not yet delivered

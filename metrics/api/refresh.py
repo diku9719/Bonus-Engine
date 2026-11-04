@@ -15,14 +15,15 @@ Vercel environment variables:
                                    Python's default "Python-urllib" signature (error 1010).
 """
 from http.server import BaseHTTPRequestHandler
-import csv, json, os, subprocess, sys, tempfile, time, urllib.error, urllib.request
+import csv, glob, json, os, subprocess, sys, tempfile, time, urllib.error, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the metrics/ folder (Vercel Root Directory)
 ENGINE = os.path.join(ROOT, "engine")   # bonus_engine.py, build_site.py, settings, status map, query
 SQL_FILE = os.path.join(ENGINE, "enki_ledger_api.sql")
 REUSE_S = 60                          # a refresh within 60 s of the last one (same server) reuses that result
 _last = {"t": 0.0, "data": None}
-NAMES = ["meta", "writers", "reviewers", "superwriters", "auditors", "waiting", "pipeline", "alerts", "ledger"]
+WEEK_NAMES = ["meta", "writers", "reviewers", "superwriters", "auditors", "waiting", "alerts"]   # one set per bonus week
+SHARED = ["pipeline", "ledger"]                                                              # same for every week
 
 
 def studio_query(sql):
@@ -69,13 +70,27 @@ def rebuild(answer, work):
         w.writerow(cols)
         for r in rows:
             w.writerow(["" if r.get(c) is None else r.get(c) for c in cols] if isinstance(r, dict) else r)
-    env = dict(os.environ, BONUS_OUT=os.path.join(work, "out"), SITE_DATA=os.path.join(work, "data"))
-    for script in ("bonus_engine.py", "build_site.py"):
-        p = subprocess.run([sys.executable, os.path.join(ENGINE, script), ledger], env=env,
-                           capture_output=True, text=True, timeout=50)
+    # one run per bonus week (engine/weeks/*.json), in parallel; each run is the engine then the site builder
+    weeks = sorted(glob.glob(os.path.join(ENGINE, "weeks", "*.json")))
+    if not weeks:
+        raise RuntimeError("No week settings in engine/weeks/")
+    procs = {}
+    for cfg in weeks:
+        wid = os.path.splitext(os.path.basename(cfg))[0]
+        env = dict(os.environ, BONUS_CONFIG=cfg, BONUS_OUT=os.path.join(work, wid, "out"), SITE_DATA=os.path.join(work, wid, "data"))
+        cmd = f'"{sys.executable}" "{os.path.join(ENGINE, "bonus_engine.py")}" "{ledger}" && "{sys.executable}" "{os.path.join(ENGINE, "build_site.py")}" "{ledger}"'
+        procs[wid] = subprocess.Popen(cmd, shell=True, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    by_week = {}
+    for wid, p in procs.items():
+        _, err = p.communicate(timeout=50)
         if p.returncode != 0:
-            raise RuntimeError(f"{script} failed: {p.stderr.strip()[-300:]}")
-    return {n: json.load(open(os.path.join(work, "data", f"{n}.json"))) for n in NAMES}
+            raise RuntimeError(f"week {wid} failed: {err.strip()[-300:]}")
+        by_week[wid] = {n: json.load(open(os.path.join(work, wid, "data", f"{n}.json"))) for n in WEEK_NAMES}
+    last = list(by_week)[-1]
+    out = {n: json.load(open(os.path.join(work, last, "data", f"{n}.json"))) for n in SHARED}
+    out["weeks"] = [{"id": w, "label": by_week[w]["meta"].get("week", w)} for w in by_week]
+    out["by_week"] = by_week
+    return out
 
 
 class handler(BaseHTTPRequestHandler):
@@ -101,8 +116,8 @@ class handler(BaseHTTPRequestHandler):
             answer = studio_query(sql)
             with tempfile.TemporaryDirectory() as work:
                 data = rebuild(answer, work)
-            data["meta"]["refreshed_at"] = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
-            data["meta"]["refresh_seconds"] = round(time.time() - started, 1)
+            data["refreshed_at"] = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
+            data["refresh_seconds"] = round(time.time() - started, 1)
             _last.update(t=time.time(), data=data)
             self._send(200, data)
         except Exception as e:  # message only; never the key

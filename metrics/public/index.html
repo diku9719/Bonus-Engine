@@ -51,6 +51,7 @@
   .paid { font-weight: 650; }
   .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
   .controls label { font-size: .85rem; color: var(--muted); }
+  .controls.week { margin: 10px 0 0; }
   select { font: inherit; max-width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--fg); }
   .bars { display: grid; grid-template-columns: minmax(0, max-content) 1fr; gap: 6px 12px; align-items: center; font-size: .85rem; }
   .bars .lbl { text-align: right; }
@@ -80,6 +81,7 @@
     <div>
       <h1>Enki bonus &amp; pipeline</h1>
       <p class="sub" id="summary">Loading…</p>
+      <div class="controls week"><label for="week">Bonus week</label><select id="week"></select></div>
     </div>
     <div class="refresh">
       <button id="refresh" type="button">Refresh from Studio</button>
@@ -107,7 +109,7 @@
     <div class="card">
       <h2>Writers</h2>
       <p class="note" id="n-writers"></p>
-      <div class="scroll"><table><thead><tr><th>Writer</th><th class="n">Submitted</th><th class="n">Waiting</th><th class="n">Passed</th><th class="n">One-shots</th><th class="n">Streaks</th><th class="n">Two-shots</th><th class="n">Three-shots</th><th class="n">Throughput</th><th class="n">Defect T14</th><th class="n" id="h-base">Base rates</th><th class="n" id="h-new">New rates</th><th class="n">Total</th></tr></thead><tbody id="b-writers"></tbody></table></div>
+      <div class="scroll"><table><thead id="h-writers"></thead><tbody id="b-writers"></tbody></table></div>
     </div>
     <div class="card">
       <h2>Superwriters</h2>
@@ -173,7 +175,12 @@
   const td = (text, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = text; return c; };
   const pill = (text, tone) => { const c = document.createElement('td'); const s = document.createElement('span'); s.className = 'pill ' + tone; s.textContent = text; c.append(s); return c; };
   const NAMES = ['meta', 'writers', 'reviewers', 'superwriters', 'auditors', 'waiting', 'pipeline', 'alerts', 'ledger'];
-  const OPTIONAL = ['auditors', 'waiting'];
+  let RAW = null, WEEK = null;   // RAW = {weeks, by_week: {id: {meta, writers, ...}}, pipeline, ledger}
+  const pickWeek = (id) => { WEEK = id; D = Object.assign({}, RAW.by_week[id], { pipeline: RAW.pipeline, ledger: RAW.ledger }); };
+  const fillWeeks = () => {
+    $('week').replaceChildren(...RAW.weeks.map((w) => new Option(w.label, w.id)));
+    $('week').value = WEEK; $('week').disabled = RAW.weeks.length < 2;
+  };
   const who = (r) => { const c = document.createElement('td'); c.className = 'who'; c.append(r.person || '—'); if (r.handle && r.handle !== r.person) { const s = document.createElement('small'); s.textContent = r.handle; c.append(s); } return c; };
   const waitTd = (v) => td(num(v), 'n' + (v > 0 ? ' wait' : ''));
   let D = null, missing = [], tasks = [], end = 0;
@@ -219,6 +226,7 @@
     (D.waiting || []).filter((w) => !k || w.role === k).forEach((w) => { const tr = document.createElement('tr'); tr.append(td(w.role), who(w), td(w.task_name), td(w.submitted_pt), td(w.now || '—'), td(w.waiting_for), td(num(w.days_waiting), 'n')); $('b-wait').append(tr); });
   };
   $('wrole').addEventListener('change', drawWaiting);
+  $('week').addEventListener('change', (e) => { pickWeek(e.target.value); render(); });
   $('task').addEventListener('change', (e) => drawTask(e.target.value));
   $('kind').addEventListener('change', drawAlerts);
 
@@ -240,12 +248,20 @@
     const byRole = (r) => D.waiting.filter((w) => w.role === r).length;
     $('t-wait-n').textContent = `${byRole('writer')} writer, ${byRole('superwriter')} superwriter, ${byRole('reviewer')} reviewer`;
     $('n-writers').textContent = N.writers || ''; $('n-super').textContent = N.superwriters || ''; $('n-rev').textContent = N.reviewers || ''; $('n-aud').textContent = N.auditors || '';
-    $('h-base').textContent = M.base_label || 'Base rates'; $('h-new').textContent = M.new_label || 'New rates'; $('h-new').hidden = !M.new_label;
 
     ['b-writers', 'b-super', 'b-rev', 'b-aud', 'h-aud', 'pipe', 'alert-tiles'].forEach((id) => $(id).replaceChildren());
     const paid = (v) => td(usd(v), 'n' + (v > 0 ? ' paid' : ''));
-    D.writers.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), td(num(r.submitted_in_window), 'n'), waitTd(r.waiting_review), td(num(r.passed), 'n'), td(num(r.one_shots), 'n'), td(num(r.streaks), 'n'), td(num(r.two_shots), 'n'), td(num(r.three_shots), 'n'), td(num(r.throughput_tasks), 'n'), td(pct(r.defect_rate_t14), 'n'), td(usd(r.usd_base_rules), 'n')); if (M.new_label) tr.append(td(usd(r.usd_new_rules), 'n')); tr.append(paid(r.total_usd)); $('b-writers').append(tr); });
-    D.superwriters.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), td(num(r.submitted_to_audit), 'n'), waitTd(r.waiting), td(num(r.delivered), 'n'), td(num(r.one_shots), 'n'), td(pct(r.defect_rate_t14), 'n'), r.defect_ok ? pill('Under 20%', 'ok') : pill('20% or more', 'bad'), paid(r.total_usd)); $('b-super').append(tr); });
+    const WC = { submitted_in_window: ['Submitted', (v) => td(num(v), 'n')], waiting_review: ['Waiting', waitTd], carried_in: ['Carried in', (v) => td(num(v), 'n')],
+      failed_audit: ['Failed audit', (v) => td(num(v), 'n' + (v > 0 ? ' bad' : ''))], passed: ['Paid tasks', (v) => td(num(v), 'n')], one_shots: ['One-shots', (v) => td(num(v), 'n')],
+      streaks: ['Streaks', (v) => td(num(v), 'n')], two_shots: ['Two-shots', (v) => td(num(v), 'n')], three_shots: ['Three-shots', (v) => td(num(v), 'n')],
+      throughput_tasks: ['Throughput', (v) => td(num(v), 'n')], defect_rate_t14: ['Defect T14', (v) => td(pct(v), 'n')],
+      usd_base_rules: [M.base_label || 'Base rates', (v) => td(usd(v), 'n')], usd_new_rules: [M.new_label || 'New rates', (v) => td(usd(v), 'n')], total_usd: ['Total', paid] };
+    const cols = (M.writer_cols || Object.keys(WC)).filter((c) => WC[c]);
+    const hw = document.createElement('tr'); const th0 = document.createElement('th'); th0.textContent = 'Writer'; hw.append(th0);
+    cols.forEach((c) => { const th = document.createElement('th'); th.className = 'n'; th.textContent = WC[c][0]; hw.append(th); });
+    $('h-writers').replaceChildren(hw);
+    D.writers.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), ...cols.map((c) => WC[c][1](r[c]))); $('b-writers').append(tr); });
+    D.superwriters.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), td(num(r.submitted_to_audit), 'n'), waitTd(r.waiting), td(num(r.delivered), 'n'), td(num(r.one_shots), 'n'), td(pct(r.defect_rate_t14), 'n'), M.superwriter_bonus === false ? pill('No bonus this week', 'warn') : r.defect_ok ? pill('Under 20%', 'ok') : pill('20% or more', 'bad'), paid(r.total_usd)); $('b-super').append(tr); });
     D.reviewers.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), td(num(r.touches), 'n'), td(num(r.sent_to_audit), 'n'), waitTd(r.waiting_audit), td(pct(r.defect_rate), 'n'), td(pct(r.defect_rate_t14), 'n'), r.qualifies ? pill('Qualifies', 'ok') : pill(r.why_not, 'warn'), paid(r.total_usd)); $('b-rev').append(tr); });
     const at = M.auditor_tiers || [];
     const hr = document.createElement('tr');
@@ -287,8 +303,10 @@
   // first view: the snapshot deployed with the site
   const load = async (n) => { const r = await fetch(`data/${n}.json`, { cache: 'no-store' }); if (!r.ok) throw new Error(`${n}.json (${r.status})`); return r.json(); };
   const results = await Promise.allSettled(NAMES.map(load));
-  D = {};
-  results.forEach((r, i) => { if (r.status === 'fulfilled') D[NAMES[i]] = r.value; else { D[NAMES[i]] = NAMES[i] === 'meta' ? {} : []; missing.push(r.reason.message); } });
+  const snap = {};
+  results.forEach((r, i) => { if (r.status === 'fulfilled') snap[NAMES[i]] = r.value; else { snap[NAMES[i]] = NAMES[i] === 'meta' ? {} : []; missing.push(r.reason.message); } });
+  RAW = { weeks: [{ id: 'snapshot', label: (snap.meta && snap.meta.week) || 'Saved snapshot' }], by_week: { snapshot: snap }, pipeline: snap.pipeline, ledger: snap.ledger };
+  pickWeek('snapshot'); fillWeeks();
   const noSnapshot = missing.length === NAMES.length;
   if (noSnapshot) { $('summary').textContent = 'Loading live data from Studio…'; }
   else render();
@@ -304,9 +322,10 @@
       const r = await fetch('api/refresh', { method: 'POST', cache: 'no-store', headers: { 'Content-Type': 'application/json' }, body: '{}' });
       let body = {}; try { body = await r.json(); } catch (e) { body = {}; }
       if (!r.ok) throw new Error(body.error || `Refresh failed (${r.status})`);
-      if (!NAMES.filter((n) => !OPTIONAL.includes(n)).every((n) => n in body)) throw new Error('Refresh returned incomplete data');
-      D = body; missing = []; render();
-      st.textContent = `Live from Studio: data through ${D.meta.data_through_pt || D.meta.data_through}, refreshed ${D.meta.refreshed_at} (${D.meta.refresh_seconds} s).`;
+      if (!body.by_week || !body.weeks || !body.weeks.length) throw new Error('Refresh returned incomplete data');
+      const prev = WEEK; RAW = body; missing = [];
+      pickWeek(RAW.by_week[prev] ? prev : RAW.weeks[RAW.weeks.length - 1].id); fillWeeks(); render();
+      st.textContent = `Live from Studio: data through ${D.meta.data_through_pt || D.meta.data_through}, refreshed ${RAW.refreshed_at} (${RAW.refresh_seconds} s).`;
     } catch (e) {
       st.classList.add('err'); st.textContent = D.meta && D.meta.data_through ? `${e.message}. Still showing the previous data.` : `${e.message}.`;
       if (!(D.meta && D.meta.data_through)) $('summary').textContent = 'Could not load live data from Studio. See the message under the button, then press Refresh to try again.';

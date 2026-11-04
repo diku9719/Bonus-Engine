@@ -1,0 +1,155 @@
+{
+  "_readme": "Week of Nov 3 (through Friday, delivery push). One file per bonus week in engine/weeks/; the dashboard shows each as a choice in its week picker. Times are UTC (midnight PST = 08:00Z).",
+  "week_id": "2026-11-03",
+  "week_label": "Nov 3 - Nov 6, 2026",
+  "source_posts": [
+    "Sara M. #enki-announcements 2026-11-03 (bonus through Friday)",
+    "Ekansh/Manav call 2026-11-04 (auditor daily, PT days)",
+    "Manav answers 2026-11-04"
+  ],
+  "window": {
+    "start_utc": "2026-11-03T08:00:00Z",
+    "end_utc": "2026-11-07T01:00:00Z",
+    "snapshot_utc": "2026-11-07T01:00:00Z",
+    "_note": "Tue Nov 3 12:00 AM PST to Fri Nov 6 5:00 PM PST."
+  },
+  "t14_days": 14,
+  "writer": {
+    "structure_name": "Nov 3 \u2013 Friday push",
+    "per_task_usd": 150,
+    "one_shot_usd": 100,
+    "two_shot_usd": 0,
+    "three_shot_usd": 0,
+    "streak_usd": 0,
+    "pay_after": "audit",
+    "no_audit_fail": true,
+    "_note": "$150 per task that passes review without failing audit, +$100 if it passed review first time. pay_after 'audit': held in Waiting until the audit passes (Zayn: tasks in review or audit aren't bonused until resolved). Use 'review' to pay at review.",
+    "throughput_tiers": [
+      {
+        "min_tasks": 2,
+        "usd": 200
+      }
+    ],
+    "gate": {
+      "all_time_aht_max_hours": null
+    }
+  },
+  "reviewer": {
+    "gate": {
+      "min_sent_to_audit_in_window": 1,
+      "defect_rate_max": 0.3
+    },
+    "defect_rate_window": "t14",
+    "touch_tiers": [
+      {
+        "min_touches": 3,
+        "usd": 100
+      },
+      {
+        "min_touches": 5,
+        "usd": 200
+      },
+      {
+        "min_touches": 7,
+        "usd": 300
+      }
+    ],
+    "defect_rate_tiers": [
+      {
+        "max_rate": 0.15,
+        "usd": 50
+      },
+      {
+        "max_rate": 0.1,
+        "usd": 100
+      }
+    ]
+  },
+  "superwriter": {
+    "enabled": false,
+    "_note": "No superwriter bonus in this week's post."
+  },
+  "auditor": {
+    "_note": "3 / 6 audits per Pacific-time day (call, Nov 4); highest tier per day only. Dollar amounts not announced yet: fill usd.",
+    "audit_stages": [
+      "In audit",
+      "In RFD audit"
+    ],
+    "daily_tiers": [
+      {
+        "min_audits": 3,
+        "usd": 0
+      },
+      {
+        "min_audits": 6,
+        "usd": 0
+      }
+    ]
+  },
+  "stages": {
+    "passed_review_band": [
+      "Ready for auditing",
+      "In audit",
+      "Passed audit",
+      "Holdout",
+      "Ready for delivery",
+      "Ready for RFD audit",
+      "In RFD audit",
+      "RFD audit pass"
+    ],
+    "writer_sendback": [
+      "Needs Edits",
+      "Needs Edits (stage 2)"
+    ],
+    "superwriter_sendback": [
+      "Needs Edits (Superwriter)"
+    ],
+    "superwriter_lane": [
+      "Ready for writing (Superwriter)",
+      "Drafting (Superwriter)",
+      "Needs Edits (Superwriter)"
+    ],
+    "review": [
+      "In review",
+      "In stage 2 review",
+      "In review (Superreviewer)"
+    ],
+    "audit_fail": [
+      "Failed audit",
+      "RFD audit fail"
+    ],
+    "terminal": [
+      "Ready for delivery",
+      "Discarded",
+      "RFD audit pass"
+    ],
+    "owned_work": [
+      "Drafting",
+      "Drafting (Superwriter)",
+      "Needs Edits",
+      "Needs Edits (stage 2)",
+      "Needs Edits (Superwriter)",
+      "In review",
+      "In stage 2 review",
+      "In review (Superreviewer)",
+      "In audit",
+      "In RFD audit"
+    ]
+  },
+  "rules": {
+    "streaks_as_separate_pairs": true,
+    "two_shot_pays_even_if_audit_later_fails": true,
+    "rerun_loop_is_not_a_touch": true,
+    "payout_email_domain": "@mercor.expert",
+    "alert_needs_edits_rounds": 3,
+    "alert_idle_days": 3,
+    "count_tasks_by": "first_submit",
+    "_count_tasks_by_note": "first_submit: a task counts for the week it was first submitted in, and pays once it passes review (Zayn, Nov 4). passed_review: the older rule, counts by when it passed review.",
+    "day_timezone": "America/Los_Angeles"
+  },
+  "writer_rate_changes": [],
+  "aht": {
+    "available": false,
+    "_note": "Studio does not record working hours, so AHT is not computed. Put true here only once an hours source is wired in."
+  }
+}
