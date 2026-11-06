@@ -74,6 +74,109 @@
   @media (max-width: 520px) { .refresh { align-items: flex-start; } .refresh .status { text-align: left; } }
   @media (max-width: 520px) { .bars, .tl { grid-template-columns: 1fr; } .bars .lbl { text-align: left; } }
 </style>
+
+<style>
+
+/* ===== Enki Operations dark dashboard theme ===== */
+:root {
+  --bg:#0c1015; --panel:#141922; --fg:#e6edf3; --muted:#8995a5;
+  --line:#222c3b; --accent:#2dd4bf; --accent-soft:#12332f; --bar:#253040;
+  --ok:#34d399; --warn:#fbbf24; --bad:#fb7185;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light) {
+  :root { color-scheme:dark; }
+}
+body { background:#0c1015; color:#e6edf3; font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif; }
+.wrap { max-width:1440px; padding:26px 28px 52px; gap:24px; }
+.head {
+  position:relative; align-items:center; padding:18px 20px;
+  background:#0f141b; border:1px solid #1c2430; border-radius:14px;
+  box-shadow:0 8px 28px rgba(0,0,0,.22);
+}
+h1 { color:#f8fafc; font-size:1.8rem; font-weight:750; letter-spacing:-.035em; }
+.sub { color:#a3afbd; font-size:.88rem; }
+.sub b { color:#5eead4; }
+.controls.week { margin-top:14px; }
+.controls label { color:#94a3b8; }
+select {
+  background:#10151d; color:#dbe4ee; border:1px solid #263242;
+  border-radius:8px; padding:8px 10px;
+}
+.refresh button {
+  background:#17232b; border:1px solid #28594f; color:#5eead4;
+  border-radius:8px; padding:9px 14px; transition:.2s;
+}
+.refresh button:hover { background:#1d3037; }
+.refresh .status { color:#94a3b8; }
+.tabs {
+  gap:22px; border-bottom:1px solid #212b38; padding:0 4px;
+}
+.tabs button {
+  color:#94a3b8; padding:13px 5px; border-bottom:2px solid transparent;
+  font-size:.9rem; font-weight:600; transition:.2s;
+}
+.tabs button:hover { color:#e2e8f0; }
+.tabs button[aria-selected="true"] {
+  color:#f0fdfa; border-bottom-color:#2dd4bf;
+}
+section { gap:18px; }
+.tiles { grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr)); gap:14px; }
+.tile,.card {
+  background:#141922; border:1px solid #222c3b; border-radius:13px;
+  padding:19px; box-shadow:0 4px 20px -2px rgba(0,0,0,.28);
+}
+.tile { transition:border-color .2s,transform .2s; }
+.tile:hover { border-color:#31534f; transform:translateY(-1px); }
+.tile h3 {
+  color:#8c9aab; font-size:.72rem; letter-spacing:.09em; font-weight:700;
+}
+.big { color:#f8fafc; font-size:1.85rem; font-weight:750; letter-spacing:-.035em; }
+.tile p { color:#8290a1; font-size:.78rem; }
+.card h2 { color:#f1f5f9; font-size:1.08rem; font-weight:700; }
+.note { color:#8996a7; font-size:.8rem; line-height:1.65; }
+.scroll { max-height:34rem; scrollbar-width:thin; scrollbar-color:#253040 #0f141c; }
+table { color:#d8e1eb; font-size:.81rem; }
+th {
+  background:#10151e; color:#8795a7; text-transform:uppercase;
+  font-size:.68rem; letter-spacing:.07em; padding:11px 10px;
+  border-bottom:1px solid #263242;
+}
+td { padding:10px; border-bottom:1px solid #1e2835; }
+tbody tr { transition:background .15s; }
+tbody tr:hover { background:rgba(36,47,63,.45); }
+.who { color:#e2e8f0; font-weight:600; }
+.who small { color:#718096; }
+.pill { border-radius:999px; padding:2px 8px; font-size:.7rem; font-weight:650; }
+.ok { color:#34d399; } .warn { color:#fbbf24; } .bad { color:#fb7185; }
+.wait { color:#fbbf24; }
+.bars { gap:9px 14px; color:#dbe4ee; }
+.bars .lbl { color:#aab6c5; }
+.bars .bar { height:16px; border-radius:4px; background:#344154; }
+.bars .bar.top { background:linear-gradient(90deg,#2dd4bf,#10b981); }
+.bars .val { color:#91a0b2; font-size:.78rem; }
+.tl .lane { background:#1d2936; }
+.legend { color:#a3afbd; }
+.err { color:#fb7185; }
+@media(max-width:700px) {
+  .wrap { padding:16px 12px 36px; gap:17px; }
+  .head { padding:15px; }
+  h1 { font-size:1.45rem; }
+  .tabs { gap:10px; overflow-x:auto; flex-wrap:nowrap; }
+  .tabs button { white-space:nowrap; font-size:.82rem; padding:11px 4px; }
+  .tile,.card { padding:15px; }
+}
+
+
+.role-tile { cursor:pointer; outline:none; transition:border-color .2s,box-shadow .2s,transform .2s; }
+.role-tile.selected { border-color:#2dd4bf; box-shadow:0 0 0 1px rgba(45,212,191,.22),0 8px 24px rgba(0,0,0,.24); background:linear-gradient(145deg,#17242a,#141922 65%); }
+.role-tile:focus-visible { outline:2px solid #2dd4bf; outline-offset:3px; }
+.role-detail-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; }
+.role-detail-head .note { margin-bottom:0; }
+.role-hint { color:#718096; font-size:.72rem; white-space:nowrap; padding-top:4px; }
+@media(max-width:650px) { .role-detail-head { flex-direction:column; } .role-hint { white-space:normal; } }
+
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -100,31 +203,18 @@
   <section id="v-bonuses">
     <p class="note" id="snap-note"></p>
     <div class="tiles">
-      <div class="tile"><h3>Writers</h3><span class="big" id="t-writers">—</span><p id="t-writers-n"></p></div>
-      <div class="tile"><h3>Superwriters</h3><span class="big" id="t-super">—</span><p id="t-super-n"></p></div>
-      <div class="tile"><h3>Reviewers</h3><span class="big" id="t-rev">—</span><p id="t-rev-n"></p></div>
-      <div class="tile"><h3>Auditors</h3><span class="big" id="t-aud">—</span><p id="t-aud-n"></p></div>
+      <div class="tile role-tile selected" data-role-card="writers" role="button" tabindex="0" aria-pressed="true"><h3>Writers</h3><span class="big" id="t-writers">—</span><p id="t-writers-n"></p></div>
+      <div class="tile role-tile" data-role-card="superwriters" role="button" tabindex="0" aria-pressed="false"><h3>Superwriters</h3><span class="big" id="t-super">—</span><p id="t-super-n"></p></div>
+      <div class="tile role-tile" data-role-card="reviewers" role="button" tabindex="0" aria-pressed="false"><h3>Reviewers</h3><span class="big" id="t-rev">—</span><p id="t-rev-n"></p></div>
+      <div class="tile role-tile" data-role-card="auditors" role="button" tabindex="0" aria-pressed="false"><h3>Auditors</h3><span class="big" id="t-aud">—</span><p id="t-aud-n"></p></div>
       <div class="tile"><h3>Waiting to resolve</h3><span class="big" id="t-wait">—</span><p id="t-wait-n"></p></div>
     </div>
-    <div class="card">
-      <h2>Writers</h2>
-      <p class="note" id="n-writers"></p>
-      <div class="scroll"><table><thead id="h-writers"></thead><tbody id="b-writers"></tbody></table></div>
-    </div>
-    <div class="card">
-      <h2>Superwriters</h2>
-      <p class="note" id="n-super"></p>
-      <div class="scroll"><table><thead><tr><th>Superwriter</th><th class="n">Submitted</th><th class="n">Waiting</th><th class="n">Delivered</th><th class="n">One-shots</th><th class="n">Defect T14</th><th>Gate</th><th class="n">Total</th></tr></thead><tbody id="b-super"></tbody></table></div>
-    </div>
-    <div class="card">
-      <h2>Reviewers</h2>
-      <p class="note" id="n-rev"></p>
-      <div class="scroll"><table><thead><tr><th>Reviewer</th><th class="n">Touches</th><th class="n">Sent to audit</th><th class="n">Waiting audit</th><th class="n">Defect all-time</th><th class="n">Defect T14</th><th>Gate</th><th class="n">Total</th></tr></thead><tbody id="b-rev"></tbody></table></div>
-    </div>
-    <div class="card">
-      <h2>Auditors (per Pacific-time day)</h2>
-      <p class="note" id="n-aud"></p>
-      <div class="scroll"><table><thead id="h-aud"></thead><tbody id="b-aud"></tbody></table></div>
+    <div class="card role-detail">
+      <div class="role-detail-head">
+        <div><h2 id="role-table-title">Writers</h2><p class="note" id="role-table-note"></p></div>
+        <span class="role-hint">Select a summary card to view its details</span>
+      </div>
+      <div class="scroll"><table><thead id="h-role"></thead><tbody id="b-role"></tbody></table></div>
     </div>
   </section>
 
@@ -176,7 +266,25 @@
   const pill = (text, tone) => { const c = document.createElement('td'); const s = document.createElement('span'); s.className = 'pill ' + tone; s.textContent = text; c.append(s); return c; };
   const NAMES = ['meta', 'writers', 'reviewers', 'superwriters', 'auditors', 'waiting', 'pipeline', 'alerts', 'ledger'];
   let RAW = null, WEEK = null;   // RAW = {weeks, by_week: {id: {meta, writers, ...}}, pipeline, ledger}
-  const pickWeek = (id) => { WEEK = id; D = Object.assign({}, RAW.by_week[id], { pipeline: RAW.pipeline, ledger: RAW.ledger }); };
+  const asArray = (value) => Array.isArray(value) ? value : [];
+  const normalizeWeek = (value) => {
+    const week = value && typeof value === 'object' ? value : {};
+    return {
+      ...week,
+      meta: week.meta && typeof week.meta === 'object' ? week.meta : {},
+      writers: asArray(week.writers),
+      superwriters: asArray(week.superwriters),
+      reviewers: asArray(week.reviewers),
+      auditors: asArray(week.auditors),
+      waiting: asArray(week.waiting),
+      alerts: asArray(week.alerts)
+    };
+  };
+  const pickWeek = (id) => {
+    WEEK = id;
+    const selected = normalizeWeek(RAW.by_week && RAW.by_week[id]);
+    D = { ...selected, pipeline: asArray(RAW.pipeline), ledger: asArray(RAW.ledger) };
+  };
   const fillWeeks = () => {
     $('week').replaceChildren(...RAW.weeks.map((w) => new Option(w.label, w.id)));
     $('week').value = WEEK; $('week').disabled = RAW.weeks.length < 2;
@@ -184,6 +292,25 @@
   const who = (r) => { const c = document.createElement('td'); c.className = 'who'; c.append(r.person || '—'); if (r.handle && r.handle !== r.person) { const s = document.createElement('small'); s.textContent = r.handle; c.append(s); } return c; };
   const waitTd = (v) => td(num(v), 'n' + (v > 0 ? ' wait' : ''));
   let D = null, missing = [], tasks = [], end = 0;
+  let activeRole = 'writers';
+  const roleLabels = { writers: 'Writers', superwriters: 'Superwriters', reviewers: 'Reviewers', auditors: 'Auditors' };
+  const selectRole = (role) => {
+    if (!roleLabels[role]) return;
+    activeRole = role;
+    document.querySelectorAll('[data-role-card]').forEach((card) => {
+      const selected = card.dataset.roleCard === role;
+      card.classList.toggle('selected', selected);
+      card.setAttribute('aria-pressed', String(selected));
+    });
+    if (D) renderRoleTable();
+  };
+  document.querySelectorAll('[data-role-card]').forEach((card) => {
+    card.addEventListener('click', () => selectRole(card.dataset.roleCard));
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectRole(card.dataset.roleCard); }
+    });
+  });
+
 
   // tabs (wired once)
   const tabs = document.querySelectorAll('[data-tab]');
@@ -230,12 +357,74 @@
   $('task').addEventListener('change', (e) => drawTask(e.target.value));
   $('kind').addEventListener('change', drawAlerts);
 
+  const renderRoleTable = () => {
+    if (!D) return;
+    const M = D.meta || {};
+    const head = $('h-role'), body = $('b-role');
+    head.replaceChildren(); body.replaceChildren();
+    $('role-table-title').textContent = activeRole === 'auditors' ? 'Auditors (per Pacific-time day)' : roleLabels[activeRole];
+    $('role-table-note').textContent = (M.notes || {})[activeRole] || '';
+
+    const addHeaders = (labels) => {
+      const row = document.createElement('tr');
+      labels.forEach((item) => {
+        const th = document.createElement('th');
+        th.textContent = typeof item === 'string' ? item : item.label;
+        if (typeof item === 'object' && item.numeric) th.className = 'n';
+        row.append(th);
+      });
+      head.append(row);
+    };
+    const addRow = (cells) => { const row = document.createElement('tr'); row.append(...cells); body.append(row); };
+    const paid = (v) => td(usd(v), 'n' + (v > 0 ? ' paid' : ''));
+    const waitTd = (v) => td(num(v), 'n' + (v > 0 ? ' wait' : ''));
+
+    if (activeRole === 'writers') {
+      const WC = {
+        submitted_in_window: ['Submitted', (v) => td(num(v), 'n')],
+        waiting_review: ['Waiting', waitTd],
+        carried_in: ['Carried in', (v) => td(num(v), 'n')],
+        failed_audit: ['Failed audit', (v) => td(num(v), 'n' + (v > 0 ? ' bad' : ''))],
+        passed: ['Paid tasks', (v) => td(num(v), 'n')],
+        one_shots: ['One-shots', (v) => td(num(v), 'n')],
+        streaks: ['Streaks', (v) => td(num(v), 'n')],
+        two_shots: ['Two-shots', (v) => td(num(v), 'n')],
+        three_shots: ['Three-shots', (v) => td(num(v), 'n')],
+        throughput_tasks: ['Throughput', (v) => td(num(v), 'n')],
+        defect_rate_t14: ['Defect T14', (v) => td(pct(v), 'n')],
+        usd_base_rules: [M.base_label || 'Base rates', (v) => td(usd(v), 'n')],
+        usd_new_rules: [M.new_label || 'New rates', (v) => td(usd(v), 'n')],
+        total_usd: ['Total', paid]
+      };
+      const cols = (M.writer_cols || Object.keys(WC)).filter((c) => WC[c]);
+      addHeaders([{label:'Writer'}, ...cols.map((c) => ({label:WC[c][0],numeric:true}))]);
+      (D.writers || []).forEach((r) => addRow([who(r), ...cols.map((c) => WC[c][1](r[c]))]));
+    } else if (activeRole === 'superwriters') {
+      addHeaders(['Superwriter',{label:'Submitted',numeric:true},{label:'Waiting',numeric:true},{label:'Delivered',numeric:true},{label:'One-shots',numeric:true},{label:'Defect T14',numeric:true},'Gate',{label:'Total',numeric:true}]);
+      (D.superwriters || []).forEach((r) => addRow([who(r),td(num(r.submitted_to_audit),'n'),waitTd(r.waiting),td(num(r.delivered),'n'),td(num(r.one_shots),'n'),td(pct(r.defect_rate_t14),'n'),M.superwriter_bonus === false ? pill('No bonus this week','warn') : r.defect_ok ? pill('Under 20%','ok') : pill('20% or more','bad'),paid(r.total_usd)]));
+    } else if (activeRole === 'reviewers') {
+      addHeaders(['Reviewer',{label:'Touches',numeric:true},{label:'Sent to audit',numeric:true},{label:'Waiting audit',numeric:true},{label:'Defect all-time',numeric:true},{label:'Defect T14',numeric:true},'Gate',{label:'Total',numeric:true}]);
+      (D.reviewers || []).forEach((r) => addRow([who(r),td(num(r.touches),'n'),td(num(r.sent_to_audit),'n'),waitTd(r.waiting_audit),td(pct(r.defect_rate),'n'),td(pct(r.defect_rate_t14),'n'),r.qualifies ? pill('Qualifies','ok') : pill(r.why_not,'warn'),paid(r.total_usd)]));
+    } else if (activeRole === 'auditors') {
+      const tiers = M.auditor_tiers || [];
+      addHeaders(['Auditor',{label:'Audits',numeric:true},{label:'Failed',numeric:true},{label:'Active days',numeric:true},...tiers.map((t) => ({label:`Days ${t.min_audits}+`,numeric:true})),{label:'Best day',numeric:true},{label:'Per day (PT)'},{label:'Total',numeric:true}]);
+      (D.auditors || []).forEach((r) => addRow([who(r),td(num(r.audits),'n'),td(num(r.failed),'n'),td(num(r.active_days),'n'),...tiers.map((t) => td(num(r[`days_${t.min_audits}_plus`]),'n')),td(num(r.best_day),'n'),td(r.by_day),paid(r.total_usd)]));
+    }
+  };
+
   // draw everything from D (safe to call again after a refresh)
   const render = () => {
     const sum = (rows) => rows.reduce((s, r) => s + Number(r.total_usd || 0), 0);
     const earning = (rows) => rows.filter((r) => Number(r.total_usd) > 0).length;
     const M = D.meta || {}, N = M.notes || {};
-    D.auditors = D.auditors || []; D.waiting = D.waiting || [];
+    D.writers = asArray(D.writers);
+    D.superwriters = asArray(D.superwriters);
+    D.reviewers = asArray(D.reviewers);
+    D.auditors = asArray(D.auditors);
+    D.waiting = asArray(D.waiting);
+    D.pipeline = asArray(D.pipeline);
+    D.ledger = asArray(D.ledger);
+    D.alerts = asArray(D.alerts);
     const total = sum(D.writers) + sum(D.superwriters) + sum(D.reviewers) + sum(D.auditors);
     const open = D.pipeline.reduce((s, r) => s + r.open_tasks, 0);
     $('summary').replaceChildren(`Week of ${M.week || '—'}, data through ${M.data_through_pt || M.data_through || '—'}: `, Object.assign(document.createElement('b'), { textContent: usd(total) }),
@@ -247,27 +436,15 @@
     $('t-wait').textContent = num(D.waiting.length);
     const byRole = (r) => D.waiting.filter((w) => w.role === r).length;
     $('t-wait-n').textContent = `${byRole('writer')} writer, ${byRole('superwriter')} superwriter, ${byRole('reviewer')} reviewer`;
-    $('n-writers').textContent = N.writers || ''; $('n-super').textContent = N.superwriters || ''; $('n-rev').textContent = N.reviewers || ''; $('n-aud').textContent = N.auditors || '';
 
-    ['b-writers', 'b-super', 'b-rev', 'b-aud', 'h-aud', 'pipe', 'alert-tiles'].forEach((id) => $(id).replaceChildren());
+    ['h-role', 'b-role', 'pipe', 'alert-tiles'].forEach((id) => $(id).replaceChildren());
     const paid = (v) => td(usd(v), 'n' + (v > 0 ? ' paid' : ''));
     const WC = { submitted_in_window: ['Submitted', (v) => td(num(v), 'n')], waiting_review: ['Waiting', waitTd], carried_in: ['Carried in', (v) => td(num(v), 'n')],
       failed_audit: ['Failed audit', (v) => td(num(v), 'n' + (v > 0 ? ' bad' : ''))], passed: ['Paid tasks', (v) => td(num(v), 'n')], one_shots: ['One-shots', (v) => td(num(v), 'n')],
       streaks: ['Streaks', (v) => td(num(v), 'n')], two_shots: ['Two-shots', (v) => td(num(v), 'n')], three_shots: ['Three-shots', (v) => td(num(v), 'n')],
       throughput_tasks: ['Throughput', (v) => td(num(v), 'n')], defect_rate_t14: ['Defect T14', (v) => td(pct(v), 'n')],
       usd_base_rules: [M.base_label || 'Base rates', (v) => td(usd(v), 'n')], usd_new_rules: [M.new_label || 'New rates', (v) => td(usd(v), 'n')], total_usd: ['Total', paid] };
-    const cols = (M.writer_cols || Object.keys(WC)).filter((c) => WC[c]);
-    const hw = document.createElement('tr'); const th0 = document.createElement('th'); th0.textContent = 'Writer'; hw.append(th0);
-    cols.forEach((c) => { const th = document.createElement('th'); th.className = 'n'; th.textContent = WC[c][0]; hw.append(th); });
-    $('h-writers').replaceChildren(hw);
-    D.writers.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), ...cols.map((c) => WC[c][1](r[c]))); $('b-writers').append(tr); });
-    D.superwriters.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), td(num(r.submitted_to_audit), 'n'), waitTd(r.waiting), td(num(r.delivered), 'n'), td(num(r.one_shots), 'n'), td(pct(r.defect_rate_t14), 'n'), M.superwriter_bonus === false ? pill('No bonus this week', 'warn') : r.defect_ok ? pill('Under 20%', 'ok') : pill('20% or more', 'bad'), paid(r.total_usd)); $('b-super').append(tr); });
-    D.reviewers.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), td(num(r.touches), 'n'), td(num(r.sent_to_audit), 'n'), waitTd(r.waiting_audit), td(pct(r.defect_rate), 'n'), td(pct(r.defect_rate_t14), 'n'), r.qualifies ? pill('Qualifies', 'ok') : pill(r.why_not, 'warn'), paid(r.total_usd)); $('b-rev').append(tr); });
-    const at = M.auditor_tiers || [];
-    const hr = document.createElement('tr');
-    ['Auditor', 'Audits', 'Failed', 'Active days', ...at.map((t) => `Days ${t.min_audits}+`), 'Best day', 'Per day (PT)', 'Total'].forEach((h, i) => { const th = document.createElement('th'); th.textContent = h; if (i && h !== 'Per day (PT)') th.className = 'n'; hr.append(th); });
-    $('h-aud').append(hr);
-    D.auditors.forEach((r) => { const tr = document.createElement('tr'); tr.append(who(r), td(num(r.audits), 'n'), td(num(r.failed), 'n'), td(num(r.active_days), 'n'), ...at.map((t) => td(num(r[`days_${t.min_audits}_plus`]), 'n')), td(num(r.best_day), 'n'), td(r.by_day), paid(r.total_usd)); $('b-aud').append(tr); });
+    renderRoleTable();
     drawWaiting();
 
     const maxOpen = Math.max(1, ...D.pipeline.map((r) => r.open_tasks));
@@ -305,7 +482,12 @@
   const results = await Promise.allSettled(NAMES.map(load));
   const snap = {};
   results.forEach((r, i) => { if (r.status === 'fulfilled') snap[NAMES[i]] = r.value; else { snap[NAMES[i]] = NAMES[i] === 'meta' ? {} : []; missing.push(r.reason.message); } });
-  RAW = { weeks: [{ id: 'snapshot', label: (snap.meta && snap.meta.week) || 'Saved snapshot' }], by_week: { snapshot: snap }, pipeline: snap.pipeline, ledger: snap.ledger };
+  RAW = {
+    weeks: [{ id: 'snapshot', label: (snap.meta && snap.meta.week) || 'Saved snapshot' }],
+    by_week: { snapshot: normalizeWeek(snap) },
+    pipeline: asArray(snap.pipeline),
+    ledger: asArray(snap.ledger)
+  };
   pickWeek('snapshot'); fillWeeks();
   const noSnapshot = missing.length === NAMES.length;
   if (noSnapshot) { $('summary').textContent = 'Loading live data from Studio…'; }
@@ -323,8 +505,19 @@
       let body = {}; try { body = await r.json(); } catch (e) { body = {}; }
       if (!r.ok) throw new Error(body.error || `Refresh failed (${r.status})`);
       if (!body.by_week || !body.weeks || !body.weeks.length) throw new Error('Refresh returned incomplete data');
-      const prev = WEEK; RAW = body; missing = [];
-      pickWeek(RAW.by_week[prev] ? prev : RAW.weeks[RAW.weeks.length - 1].id); fillWeeks(); render();
+      const prev = WEEK;
+      RAW = {
+        ...body,
+        weeks: asArray(body.weeks),
+        by_week: body.by_week && typeof body.by_week === 'object' ? body.by_week : {},
+        pipeline: asArray(body.pipeline),
+        ledger: asArray(body.ledger)
+      };
+      if (!RAW.weeks.length) throw new Error('Refresh returned no bonus weeks');
+      missing = [];
+      const selectedWeek = RAW.by_week[prev] ? prev : RAW.weeks[RAW.weeks.length - 1].id;
+      if (!RAW.by_week[selectedWeek]) throw new Error('Refresh returned no data for the selected bonus week');
+      pickWeek(selectedWeek); fillWeeks(); render();
       st.textContent = `Live from Studio: data through ${D.meta.data_through_pt || D.meta.data_through}, refreshed ${RAW.refreshed_at} (${RAW.refresh_seconds} s).`;
     } catch (e) {
       st.classList.add('err'); st.textContent = D.meta && D.meta.data_through ? `${e.message}. Still showing the previous data.` : `${e.message}.`;
@@ -340,3 +533,4 @@
 </script>
 </body>
 </html>
+
